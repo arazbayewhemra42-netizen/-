@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#145b8c">
+  <title>Стомат Туркменистан</title>
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <style>
+    :root{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:#17212b;background:#f3f6f9}
+    *{box-sizing:border-box} body{margin:0} header{background:#145b8c;color:white;padding:18px 16px}
+    header h1{font-size:21px;margin:0 0 4px} header p{margin:0;font-size:13px;opacity:.9}
+    main{max-width:850px;margin:auto;padding:16px}
+    .card{background:white;border:1px solid #e1e8ef;border-radius:14px;padding:16px;margin:0 0 14px;box-shadow:0 2px 8px #1020300a}
+    h2{font-size:18px;margin:0 0 12px} h3{font-size:15px;margin:0 0 8px}
+    input,textarea,select,button{font:inherit;width:100%;padding:11px 12px;border:1px solid #ccd6df;border-radius:9px;margin:5px 0}
+    textarea{min-height:78px;resize:vertical} button{background:#145b8c;color:white;border:0;font-weight:600;cursor:pointer}
+    button.secondary{background:#e8f0f7;color:#145b8c} button.danger{background:#a73535}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:8px}.muted{color:#647383;font-size:13px}
+    .tabs{display:flex;gap:7px;overflow:auto;margin:0 0 14px}.tabs button{white-space:nowrap;width:auto;margin:0;padding:9px 13px}
+    .tabs button.active{background:#0b3858}.hidden{display:none!important}.item{padding:10px 0;border-top:1px solid #edf1f4}
+    .item:first-child{border-top:0}.status{font-size:12px;color:#637487}.notice{padding:10px;border-radius:9px;background:#eef6fc;color:#174f77;margin:8px 0}
+    #app{display:none} #auth{max-width:460px;margin:24px auto}
+    @media(max-width:520px){.row{grid-template-columns:1fr}main{padding:10px}}
+  </style>
+</head>
+<body>
+<header><h1>Стомат Туркменистан</h1><p>Стома 3 семестр · Учебная группа</p></header>
+<main>
+  <section id="auth" class="card">
+    <h2>Вход в приложение</h2>
+    <div id="authMessage" class="muted">Войдите или создайте аккаунт студента.</div>
+    <input id="email" type="email" placeholder="Электронная почта" autocomplete="email">
+    <input id="password" type="password" placeholder="Пароль" autocomplete="current-password">
+    <input id="fullName" placeholder="ФИО (для регистрации)">
+    <div class="row">
+      <button id="signIn">Войти</button><button id="signUp" class="secondary">Регистрация</button>
+    </div>
+  </section>
+
+  <section id="app">
+    <div class="card">
+      <div class="row"><div><strong id="who">Пользователь</strong><div class="muted" id="role"></div></div><button id="signOut" class="secondary">Выйти</button></div>
+      <div id="appMessage" class="notice hidden"></div>
+    </div>
+    <nav class="tabs">
+      <button class="active" data-tab="news">Объявления</button>
+      <button data-tab="schedule">Расписание</button>
+      <button data-tab="chat">Чат</button>
+      <button data-tab="admin" id="adminTab" class="hidden">Админ</button>
+    </nav>
+
+    <section id="tab-news" class="card">
+      <h2>Объявления</h2><div id="newsList" class="muted">Загрузка...</div>
+    </section>
+    <section id="tab-schedule" class="card hidden">
+      <h2>Расписание</h2><div id="lessonList" class="muted">Загрузка...</div>
+    </section>
+    <section id="tab-chat" class="card hidden">
+      <h2>Групповой чат</h2>
+      <div id="chatList"></div>
+      <textarea id="chatText" placeholder="Напишите сообщение группе"></textarea>
+      <button id="sendGroup">Отправить сообщение</button>
+      <p class="muted">Сообщения доступны участникам группы.</p>
+    </section>
+    <section id="tab-admin" class="card hidden">
+      <h2>Панель администратора</h2>
+      <h3>Новое объявление</h3>
+      <textarea id="announcementText" placeholder="Текст объявления"></textarea>
+      <button id="postAnnouncement">Опубликовать</button>
+      <div class="item"></div>
+      <h3>Добавить занятие</h3>
+      <input id="lessonTitle" placeholder="Название занятия">
+      <input id="lessonTime" type="datetime-local">
+      <select id="lessonGroup"><option>Все группы</option><option>1 группа</option><option>2 группа</option></select>
+      <button id="addLesson">Добавить в расписание</button>
+      <div class="item"></div>
+      <h3>Список студентов</h3><div id="studentList" class="muted">Загрузка...</div>
+      <p class="muted">Для назначения администратора используйте защищённую настройку Supabase, а не эту страницу.</p>
+    </section>
+  </section>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="./config.js"></script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const cfg = window.STOMAT_CONFIG || {};
+  const ready = cfg.url && cfg.anonKey && !cfg.url.includes("YOUR_") && !cfg.anonKey.includes("YOUR_");
+  if (!window.supabase || !ready) {
+    $("authMessage").textContent = "Сначала заполните config.js: Project URL и Publishable key.";
+    $("signIn").disabled = $("signUp").disabled = true;
+    return;
+  }
+  const db = window.supabase.createClient(cfg.url, cfg.anonKey);
+  let currentUser = null, currentProfile = null;
+
+  function message(text, target="appMessage") {
+    $(target).textContent = text; $(target).classList.remove("hidden");
+  }
+  function escapeHtml(s) {
+    return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+  $("signUp").onclick = async () => {
+    const email=$("email").value.trim(), password=$("password").value, fullName=$("fullName").value.trim();
+    if(!email || !password || !fullName){message("Заполните почту, пароль и ФИО.","authMessage");return;}
+    const {error}=await db.auth.signUp({email,password,options:{data:{full_name:fullName}}});
+    message(error ? error.message : "Регистрация отправлена. Если включено подтверждение почты, проверьте электронную почту.","authMessage");
+  };
+  $("signIn").onclick = async () => {
+    const {error}=await db.auth.signInWithPassword({email:$("email").value.trim(),password:$("password").value});
+    if(error) message(error.message,"authMessage");
+  };
+  $("signOut").onclick = async () => { await db.auth.signOut(); };
+  $("postAnnouncement").onclick = async () => {
+    const body=$("announcementText").value.trim(); if(!body)return;
+    const {error}=await db.from("announcements").insert({author_id:currentUser.id,body});
+    message(error ? error.message : "Объявление опубликовано."); if(!error){$("announcementText").value="";loadNews();}
+  };
+  $("addLesson").onclick = async () => {
+    const title=$("lessonTitle").value.trim(), starts=$("lessonTime").value, subgroup=$("lessonGroup").value;
+    if(!title||!starts){message("Укажите название и дату занятия.");return;}
+    const {error}=await db.from("lessons").insert({title,starts_at:new Date(starts).toISOString(),subgroup});
+    message(error ? error.message : "Занятие добавлено."); if(!error){$("lessonTitle").value="";loadLessons();}
+  };
+  $("sendGroup").onclick = async () => {
+    const body=$("chatText").value.trim(); if(!body)return;
+    const {error}=await db.from("messages").insert({sender_id:currentUser.id,recipient_id:null,body});
+    message(error ? error.message : "Сообщение отправлено."); if(!error){$("chatText").value="";loadChat();}
+  };
+  document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{
+    document.querySelectorAll("[data-tab]").forEach(x=>x.classList.toggle("active",x===b));
+    ["news","schedule","chat","admin"].forEach(t=>$("tab-"+t).classList.toggle("hidden",t!==b.dataset.tab));
+    if(b.dataset.tab==="chat")loadChat(); if(b.dataset.tab==="admin"&&currentProfile?.role==="admin")loadStudents();
+  });
+
+  async function loadNews(){
+    const {data,error}=await db.from("announcements").select("body,created_at").order("created_at",{ascending:false}).limit(40);
+    $("newsList").innerHTML=error?escapeHtml(error.message):(data?.length?data.map(x=>`<div class="item">${escapeHtml(x.body)}<div class="status">${new Date(x.created_at).toLocaleString("ru-RU")}</div></div>`).join(""):"Пока нет объявлений.");
+  }
+  async function loadLessons(){
+    const {data,error}=await db.from("lessons").select("title,starts_at,subgroup").order("starts_at").limit(100);
+    $("lessonList").innerHTML=error?escapeHtml(error.message):(data?.length?data.map(x=>`<div class="item"><strong>${escapeHtml(x.title)}</strong><div class="status">${new Date(x.starts_at).toLocaleString("ru-RU")} · ${escapeHtml(x.subgroup)}</div></div>`).join(""):"Расписание пока пустое.");
+  }
+  async function loadChat(){
+    const {data,error}=await db.from("messages").select("body,created_at,sender_id").is("recipient_id",null).order("created_at",{ascending:true}).limit(100);
+    $("chatList").innerHTML=error?escapeHtml(error.message):(data?.length?data.map(x=>`<div class="item">${escapeHtml(x.body)}<div class="status">${new Date(x.created_at).toLocaleString("ru-RU")}</div></div>`).join(""):"Сообщений пока нет.");
+  }
+  async function loadStudents(){
+    const {data,error}=await db.from("profiles").select("full_name,subgroup,active,role").order("full_name");
+    $("studentList").innerHTML=error?escapeHtml(error.message):(data?.length?data.map(x=>`<div class="item">${escapeHtml(x.full_name)} · ${escapeHtml(x.subgroup||"Группа не назначена")} · ${escapeHtml(x.role)} · ${x.active?"Активен":"Неактивен"}</div>`).join(""):"Студентов пока нет.");
+  }
+  async function showSession(session){
+    currentUser=session?.user||null;
+    if(!currentUser){$("auth").style.display="block";$("app").style.display="none";return;}
+    const {data,error}=await db.from("profiles").select("*").eq("id",currentUser.id).maybeSingle();
+    currentProfile=data;
+    $("auth").style.display="none";$("app").style.display="block";
+    $("who").textContent=data?.full_name || currentUser.email;
+    $("role").textContent=data?.role==="admin"?"Администратор":"Студент";
+    $("adminTab").classList.toggle("hidden",data?.role!=="admin");
+    if(error)message("Не удалось загрузить профиль: "+error.message);
+    loadNews();loadLessons();
+  }
+  db.auth.onAuthStateChange((_event,session)=>{showSession(session);});
+  db.auth.getSession().then(({data})=>showSession(data.session));
+  if("serviceWorker" in navigator) window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+})();
+</script>
+</body>
+</html>
