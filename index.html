@@ -22,7 +22,8 @@
     .tabs button.active{background:#0b3858}.hidden{display:none!important}.item{padding:10px 0;border-top:1px solid #edf1f4}
     .item:first-child{border-top:0}.status{font-size:12px;color:#637487}.notice{padding:10px;border-radius:9px;background:#eef6fc;color:#174f77;margin:8px 0}
     #app{display:none} #auth{max-width:460px;margin:24px auto}
-    @media(max-width:520px){.row{grid-template-columns:1fr}main{padding:10px}}
+    .pill{display:inline-block;padding:3px 8px;border-radius:20px;background:#eef3f7;font-size:12px;margin-left:5px}
+    @media(max-width:520px){.row{grid-template-columns:1fr}main{padding:10px}.tabs{padding-bottom:3px}}
   </style>
 </head>
 <body>
@@ -48,6 +49,8 @@
       <button class="active" data-tab="news">Объявления</button>
       <button data-tab="schedule">Расписание</button>
       <button data-tab="chat">Чат</button>
+      <button data-tab="attendance">Посещаемость</button>
+      <button data-tab="report">Отчёт</button>
       <button data-tab="admin" id="adminTab" class="hidden">Админ</button>
     </nav>
 
@@ -64,6 +67,24 @@
       <button id="sendGroup">Отправить сообщение</button>
       <p class="muted">Сообщения доступны участникам группы.</p>
     </section>
+
+    <section id="tab-attendance" class="card hidden">
+      <h2>Посещаемость</h2>
+      <p class="muted">Здесь отображаются отметки о посещении занятий.</p>
+      <button id="refreshAttendance" class="secondary">Обновить</button>
+      <div id="attendanceList" class="muted">Загрузка...</div>
+    </section>
+
+    <section id="tab-report" class="card hidden">
+      <h2>Отчёт по посещаемости</h2>
+      <p class="muted">Недельный отчёт с понедельника по воскресенье.</p>
+      <div class="row">
+        <input id="reportStart" type="date" aria-label="Начало недели">
+        <button id="loadReport">Показать отчёт</button>
+      </div>
+      <div id="reportList" class="muted">Выберите дату начала недели.</div>
+    </section>
+
     <section id="tab-admin" class="card hidden">
       <h2>Панель администратора</h2>
       <h3>Новое объявление</h3>
@@ -75,6 +96,18 @@
       <input id="lessonTime" type="datetime-local">
       <select id="lessonGroup"><option>Все группы</option><option>1 группа</option><option>2 группа</option></select>
       <button id="addLesson">Добавить в расписание</button>
+      <div class="item"></div>
+      <h3>Отметить посещаемость</h3>
+      <select id="attendanceStudent"><option value="">Выберите студента</option></select>
+      <input id="attendanceLesson" placeholder="Название занятия">
+      <input id="attendanceDate" type="date">
+      <select id="attendanceGroup"><option value="">Подгруппа не указана</option><option>1 группа</option><option>2 группа</option></select>
+      <select id="attendanceStatus">
+        <option value="present">Присутствовал</option>
+        <option value="absent">Отсутствовал</option>
+        <option value="late">Опоздал</option>
+      </select>
+      <button id="saveAttendance">Сохранить отметку</button>
       <div class="item"></div>
       <h3>Список студентов</h3><div id="studentList" class="muted">Загрузка...</div>
       <p class="muted">Для назначения администратора используйте защищённую настройку Supabase, а не эту страницу.</p>
@@ -102,6 +135,19 @@
   }
   function escapeHtml(s) {
     return String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+  }
+  function dateOnly(d) {
+    const x = new Date(d.getTime() - d.getTimezoneOffset()*60000);
+    return x.toISOString().slice(0,10);
+  }
+  function mondayOf(value) {
+    const d = new Date(value + "T12:00:00");
+    const day = (d.getDay()+6)%7;
+    d.setDate(d.getDate()-day);
+    return d;
+  }
+  function statusText(s) {
+    return s==="present"?"Присутствовал":s==="absent"?"Отсутствовал":s==="late"?"Опоздал":s;
   }
   $("signUp").onclick = async () => {
     const email=$("email").value.trim(), password=$("password").value, fullName=$("fullName").value.trim();
@@ -132,8 +178,11 @@
   };
   document.querySelectorAll("[data-tab]").forEach(b=>b.onclick=()=>{
     document.querySelectorAll("[data-tab]").forEach(x=>x.classList.toggle("active",x===b));
-    ["news","schedule","chat","admin"].forEach(t=>$("tab-"+t).classList.toggle("hidden",t!==b.dataset.tab));
-    if(b.dataset.tab==="chat")loadChat(); if(b.dataset.tab==="admin"&&currentProfile?.role==="admin")loadStudents();
+    ["news","schedule","chat","attendance","report","admin"].forEach(t=>$("tab-"+t).classList.toggle("hidden",t!==b.dataset.tab));
+    if(b.dataset.tab==="chat")loadChat();
+    if(b.dataset.tab==="admin"&&currentProfile?.role==="admin")loadStudents();
+    if(b.dataset.tab==="attendance")loadAttendance();
+    if(b.dataset.tab==="report")loadReport();
   });
 
   async function loadNews(){
@@ -149,9 +198,48 @@
     $("chatList").innerHTML=error?escapeHtml(error.message):(data?.length?data.map(x=>`<div class="item">${escapeHtml(x.body)}<div class="status">${new Date(x.created_at).toLocaleString("ru-RU")}</div></div>`).join(""):"Сообщений пока нет.");
   }
   async function loadStudents(){
-    const {data,error}=await db.from("profiles").select("full_name,subgroup,active,role").order("full_name");
-    $("studentList").innerHTML=error?escapeHtml(error.message):(data?.length?data.map(x=>`<div class="item">${escapeHtml(x.full_name)} · ${escapeHtml(x.subgroup||"Группа не назначена")} · ${escapeHtml(x.role)} · ${x.active?"Активен":"Неактивен"}</div>`).join(""):"Студентов пока нет.");
+    const {data,error}=await db.from("profiles").select("id,full_name,subgroup,active,role").order("full_name");
+    if(error){$("studentList").textContent=error.message;return;}
+    $("studentList").innerHTML=data?.length?data.map(x=>`<div class="item">${escapeHtml(x.full_name||"Без имени")} · ${escapeHtml(x.subgroup||"Группа не назначена")} · ${escapeHtml(x.role)} · ${x.active?"Активен":"Неактивен"}</div>`).join(""):"Студентов пока нет.";
+    $("attendanceStudent").innerHTML='<option value="">Выберите студента</option>'+(data||[]).filter(x=>x.role!=="admin"&&x.active!==false).map(x=>`<option value="${escapeHtml(x.id)}">${escapeHtml(x.full_name||"Без имени")}</option>`).join("");
   }
+  async function loadAttendance(){
+    let query=db.from("attendance").select("student_id,lesson_date,lesson_title,subgroup,status").order("lesson_date",{ascending:false}).limit(100);
+    if(currentProfile?.role!=="admin") query=query.eq("student_id",currentUser.id);
+    const {data,error}=await query;
+    $("attendanceList").innerHTML=error?escapeHtml(error.message):(data?.length?data.map(x=>`<div class="item"><strong>${escapeHtml(x.lesson_title)}</strong><div class="status">${escapeHtml(x.lesson_date)} · ${escapeHtml(x.subgroup||"Подгруппа не указана")} · ${escapeHtml(statusText(x.status))}</div></div>`).join(""):"Отметок пока нет.");
+  }
+  $("saveAttendance").onclick=async()=>{
+    if(currentProfile?.role!=="admin"){message("Отмечать посещаемость может только администратор.");return;}
+    const student_id=$("attendanceStudent").value, lesson_title=$("attendanceLesson").value.trim(), lesson_date=$("attendanceDate").value, subgroup=$("attendanceGroup").value, status=$("attendanceStatus").value;
+    if(!student_id||!lesson_title||!lesson_date){message("Выберите студента, укажите занятие и дату.");return;}
+    const {error}=await db.from("attendance").upsert({student_id,lesson_title,lesson_date,subgroup,status,marked_by:currentUser.id},{onConflict:"student_id,lesson_date,lesson_title"});
+    message(error?"Ошибка: "+error.message:"Отметка посещаемости сохранена.");
+    if(!error){$("attendanceLesson").value="";loadAttendance();}
+  };
+  async function loadReport(){
+    if(currentProfile?.role!=="admin"){
+      $("reportList").textContent="Недельный общий отчёт доступен администратору. Ваши отметки доступны в разделе «Посещаемость».";
+      return;
+    }
+    let start=$("reportStart").value;
+    if(!start){const now=new Date();start=dateOnly(mondayOf(dateOnly(now)));$("reportStart").value=start;}
+    const from=mondayOf(start), to=new Date(from);to.setDate(to.getDate()+7);
+    const fromStr=dateOnly(from), toStr=dateOnly(to);
+    const {data,error}=await db.from("attendance").select("student_id,lesson_date,lesson_title,status,subgroup").gte("lesson_date",fromStr).lt("lesson_date",toStr).order("lesson_date");
+    if(error){$("reportList").textContent=error.message;return;}
+    const {data:profiles, error:profileError}=await db.from("profiles").select("id,full_name").order("full_name");
+    if(profileError){$("reportList").textContent=profileError.message;return;}
+    const rows=(profiles||[]).filter(p=>p.id!==currentUser.id).map(p=>{
+      const mine=(data||[]).filter(a=>a.student_id===p.id);
+      const present=mine.filter(a=>a.status==="present").length, absent=mine.filter(a=>a.status==="absent").length, late=mine.filter(a=>a.status==="late").length;
+      return `<div class="item"><strong>${escapeHtml(p.full_name||"Без имени")}</strong><div class="status">Всего отметок: ${mine.length} · Присутствовал: ${present} · Отсутствовал: ${absent} · Опоздал: ${late}</div></div>`;
+    });
+    const total=data?.length||0, present=(data||[]).filter(x=>x.status==="present").length, absent=(data||[]).filter(x=>x.status==="absent").length, late=(data||[]).filter(x=>x.status==="late").length;
+    $("reportList").innerHTML=`<div class="notice">Период: ${fromStr} — ${dateOnly(new Date(to.getTime()-86400000))}<br>Всего отметок: ${total} · Присутствовали: ${present} · Отсутствовали: ${absent} · Опоздали: ${late}</div>`+(rows.length?rows.join(""):"Нет студентов для отчёта.");
+  }
+  $("loadReport").onclick=loadReport;
+  $("refreshAttendance").onclick=loadAttendance;
   async function showSession(session){
     currentUser=session?.user||null;
     if(!currentUser){$("auth").style.display="block";$("app").style.display="none";return;}
@@ -162,7 +250,11 @@
     $("role").textContent=data?.role==="admin"?"Администратор":"Студент";
     $("adminTab").classList.toggle("hidden",data?.role!=="admin");
     if(error)message("Не удалось загрузить профиль: "+error.message);
-    loadNews();loadLessons();
+    const today=dateOnly(new Date());
+    $("attendanceDate").value=today;
+    const monday=mondayOf(today);$("reportStart").value=dateOnly(monday);
+    loadNews();loadLessons();loadAttendance();
+    if(data?.role==="admin")loadStudents();
   }
   db.auth.onAuthStateChange((_event,session)=>{showSession(session);});
   db.auth.getSession().then(({data})=>showSession(data.session));
