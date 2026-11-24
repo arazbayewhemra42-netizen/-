@@ -1,0 +1,1224 @@
+
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#145b8c">
+<title>Стомат Туркменистан</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<style>
+:root{font-family:system-ui,sans-serif;color:#172536;background:#f3f6fa}
+*{box-sizing:border-box}
+body{margin:0}
+header{background:#145b8c;color:white;padding:18px 16px}
+header h1{font-size:20px;margin:0 0 4px}
+header p{margin:0;font-size:13px}
+main{max-width:900px;margin:auto;padding:14px}
+.panel,.card{background:white;border:1px solid #e2e8f0;border-radius:14px;padding:15px;margin-bottom:13px}
+h2{font-size:18px;margin:0 0 12px}
+h3{font-size:15px;margin:0 0 8px}
+label{display:block;font-size:13px;font-weight:600;margin:10px 0 5px}
+input,textarea,select,button{font:inherit}
+input,textarea,select{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:9px;background:white}
+textarea{min-height:80px}
+button{border:0;border-radius:9px;padding:11px 14px;background:#145b8c;color:white;font-weight:600}
+button.secondary{background:#e8f0f7;color:#145b8c}
+button.danger{background:#b42318}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.tabs{display:flex;gap:7px;overflow:auto;padding:2px 0 12px}
+.tabs button{white-space:nowrap;padding:9px 12px}
+.tabs button.active{background:#0b3f65}
+.hidden{display:none!important}
+.muted{color:#64748b;font-size:13px}
+.item{padding:11px 0;border-bottom:1px solid #edf1f5}
+.tag{display:inline-block;background:#e8f0f7;color:#145b8c;padding:3px 8px;border-radius:20px;font-size:12px}
+.status{padding:10px;border-radius:9px;background:#eff6ff;color:#1e40af;margin:10px 0;font-size:13px}
+.error{background:#fef2f2;color:#991b1b}
+.success{background:#ecfdf3;color:#166534}
+.topline{display:flex;justify-content:space-between;gap:10px;align-items:center}
+a{color:#145b8c}
+</style>
+</head>
+<body>
+<header>
+<h1>Стомат Туркменистан</h1>
+<p>Стома 3 семестр · учебная группа</p>
+</header>
+<main>
+<section id="auth" class="panel">
+<h2>Вход в систему</h2>
+<div id="configWarning" class="status error hidden">Не найдены настройки Supabase в config.js.</div>
+<label>Электронная почта</label>
+<input id="email" type="email" placeholder="name@example.com">
+<label>Пароль</label>
+<input id="password" type="password" placeholder="Пароль">
+<div class="actions"><button id="loginBtn">Войти</button></div>
+<p class="muted">Если аккаунт ещё не создан, попросите администратора добавить вас в список студентов.</p>
+<div id="authMsg" class="status hidden"></div>
+</section>
+
+<section id="app" class="hidden">
+<div class="panel topline">
+<div><strong id="userName">Пользователь</strong><div class="muted" id="userMeta"></div></div>
+<button class="secondary" id="logoutBtn">Выйти</button>
+</div>
+<nav class="tabs" id="tabs">
+<button class="active" data-tab="news">Объявления</button>
+<button data-tab="schedule">Расписание</button>
+<button data-tab="chat">Чат</button>
+<button data-tab="attendance">Посещаемость</button>
+<button data-tab="report">Отчёт</button>
+<button data-tab="materials">Материалы</button>
+<button data-tab="video">Видеовстреча</button>
+<button data-tab="admin" id="adminTab" class="hidden">Админ</button>
+</nav>
+
+<section id="news" class="panel"><h2>Объявления</h2><div id="newsList">Загрузка...</div></section>
+<section id="schedule" class="panel hidden"><h2>Расписание</h2><div id="lessonList">Загрузка...</div></section>
+<section id="chat" class="panel hidden">
+<h2>Групповой чат</h2>
+<div id="chatList"></div>
+<label>Сообщение</label>
+<textarea id="chatText" placeholder="Напишите сообщение..."></textarea>
+<div class="actions"><button id="sendChat">Отправить</button></div>
+</section>
+<section id="attendance" class="panel hidden"><h2>Посещаемость</h2><div id="attendanceList"></div></section>
+<section id="report" class="panel hidden"><h2>Отчёт за неделю</h2><div id="reportContent">Загрузка...</div></section>
+<section id="materials" class="panel hidden">
+<h2>Учебные материалы</h2>
+<div id="uploadBox" class="card hidden">
+<h3>Добавить материал</h3>
+<label>Название</label><input id="matTitle">
+<label>Описание</label><textarea id="matDesc"></textarea>
+<label>Файл (до 20 МБ)</label><input id="matFile" type="file">
+<div class="actions"><button id="uploadMat">Загрузить</button></div>
+</div>
+<div id="materialsList">Загрузка...</div>
+</section>
+<section id="video" class="panel hidden">
+<h2>Видеовстреча</h2>
+<p class="muted">Видеовстречи открываются через Jitsi.</p>
+<div id="videoAdmin" class="card hidden">
+<h3>Создать комнату</h3>
+<div class="actions"><button id="createRoom">Создать комнату</button></div>
+<div id="roomCreated"></div>
+</div>
+<label>Код комнаты</label><input id="roomCode" placeholder="Введите код комнаты">
+<div class="actions"><button id="joinRoom">Присоединиться</button></div>
+</section>
+<section id="admin" class="panel hidden">
+<h2>Панель администратора</h2>
+<div class="card">
+<h3>Добавить студента</h3>
+<label>ФИО</label><input id="newName">
+<label>Email</label><input id="newEmail" type="email">
+<label>Временный пароль (не менее 8 символов)</label><input id="newPassword" type="password">
+<label>Группа</label>
+<select id="newSubgroup"><option>1 группа</option><option>2 группа</option></select>
+<div class="actions"><button id="createStudent">Создать аккаунт</button></div>
+<div id="createStudentMsg"></div>
+</div>
+<div class="card">
+<h3>Новое объявление</h3>
+<textarea id="newAnnouncement"></textarea>
+<div class="actions"><button id="publishAnnouncement">Опубликовать</button></div>
+</div>
+<div class="card">
+<h3>Добавить занятие</h3>
+<label>Название</label><input id="lessonTitle">
+<label>Дата и время</label><input id="lessonDate" type="datetime-local">
+<label>Группа</label>
+<select id="lessonGroup"><option>Все группы</option><option>1 группа</option><option>2 группа</option></select>
+<div class="actions"><button id="addLesson">Добавить в расписание</button></div>
+</div>
+<div class="card">
+<h3>Отметить посещаемость</h3>
+<label>Студент</label><select id="attendanceStudent"></select>
+<label>Дата</label><input id="attendanceDate" type="date">
+<label>Занятие</label><input id="attendanceTitle">
+<label>Статус</label>
+<select id="attendanceStatus">
+<option value="present">Присутствовал</option>
+<option value="absent">Отсутствовал</option>
+<option value="late">Опоздал</option>
+</select>
+<div class="actions"><button id="markAttendance">Сохранить отметку</button></div>
+</div>
+<div class="card"><h3>Список студентов</h3><div id="studentList">Загрузка...</div></div>
+</section>
+<div id="appMsg" class="status hidden"></div>
+</section>
+</main>
+
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#145b8c">
+<title>Стомат Туркменистан</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<style>
+:root{font-family:system-ui,sans-serif;color:#172536;background:#f3f6fa}
+*{box-sizing:border-box}
+body{margin:0}
+header{background:#145b8c;color:white;padding:18px 16px}
+header h1{font-size:20px;margin:0 0 4px}
+header p{margin:0;font-size:13px}
+main{max-width:900px;margin:auto;padding:14px}
+.panel,.card{background:white;border:1px solid #e2e8f0;border-radius:14px;padding:15px;margin-bottom:13px}
+h2{font-size:18px;margin:0 0 12px}
+h3{font-size:15px;margin:0 0 8px}
+label{display:block;font-size:13px;font-weight:600;margin:10px 0 5px}
+input,textarea,select,button{font:inherit}
+input,textarea,select{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:9px;background:white}
+textarea{min-height:80px}
+button{border:0;border-radius:9px;padding:11px 14px;background:#145b8c;color:white;font-weight:600}
+button.secondary{background:#e8f0f7;color:#145b8c}
+button.danger{background:#b42318}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.tabs{display:flex;gap:7px;overflow:auto;padding:2px 0 12px}
+.tabs button{white-space:nowrap;padding:9px 12px}
+.tabs button.active{background:#0b3f65}
+.hidden{display:none!important}
+.muted{color:#64748b;font-size:13px}
+.item{padding:11px 0;border-bottom:1px solid #edf1f5}
+.tag{display:inline-block;background:#e8f0f7;color:#145b8c;padding:3px 8px;border-radius:20px;font-size:12px}
+.status{padding:10px;border-radius:9px;background:#eff6ff;color:#1e40af;margin:10px 0;font-size:13px}
+.error{background:#fef2f2;color:#991b1b}
+.success{background:#ecfdf3;color:#166534}
+.topline{display:flex;justify-content:space-between;gap:10px;align-items:center}
+a{color:#145b8c}
+</style>
+</head>
+<body>
+<header>
+<h1>Стомат Туркменистан</h1>
+<p>Стома 3 семестр · учебная группа</p>
+</header>
+<main>
+<section id="auth" class="panel">
+<h2>Вход в систему</h2>
+<div id="configWarning" class="status error hidden">Не найдены настройки Supabase в config.js.</div>
+<label>Электронная почта</label>
+<input id="email" type="email" placeholder="name@example.com">
+<label>Пароль</label>
+<input id="password" type="password" placeholder="Пароль">
+<div class="actions"><button id="loginBtn">Войти</button></div>
+<p class="muted">Если аккаунт ещё не создан, попросите администратора добавить вас в список студентов.</p>
+<div id="authMsg" class="status hidden"></div>
+</section>
+
+<section id="app" class="hidden">
+<div class="panel topline">
+<div><strong id="userName">Пользователь</strong><div class="muted" id="userMeta"></div></div>
+<button class="secondary" id="logoutBtn">Выйти</button>
+</div>
+<nav class="tabs" id="tabs">
+<button class="active" data-tab="news">Объявления</button>
+<button data-tab="schedule">Расписание</button>
+<button data-tab="chat">Чат</button>
+<button data-tab="attendance">Посещаемость</button>
+<button data-tab="report">Отчёт</button>
+<button data-tab="materials">Материалы</button>
+<button data-tab="video">Видеовстреча</button>
+<button data-tab="admin" id="adminTab" class="hidden">Админ</button>
+</nav>
+
+<section id="news" class="panel"><h2>Объявления</h2><div id="newsList">Загрузка...</div></section>
+<section id="schedule" class="panel hidden"><h2>Расписание</h2><div id="lessonList">Загрузка...</div></section>
+<section id="chat" class="panel hidden">
+<h2>Групповой чат</h2>
+<div id="chatList"></div>
+<label>Сообщение</label>
+<textarea id="chatText" placeholder="Напишите сообщение..."></textarea>
+<div class="actions"><button id="sendChat">Отправить</button></div>
+</section>
+<section id="attendance" class="panel hidden"><h2>Посещаемость</h2><div id="attendanceList"></div></section>
+<section id="report" class="panel hidden"><h2>Отчёт за неделю</h2><div id="reportContent">Загрузка...</div></section>
+<section id="materials" class="panel hidden">
+<h2>Учебные материалы</h2>
+<div id="uploadBox" class="card hidden">
+<h3>Добавить материал</h3>
+<label>Название</label><input id="matTitle">
+<label>Описание</label><textarea id="matDesc"></textarea>
+<label>Файл (до 20 МБ)</label><input id="matFile" type="file">
+<div class="actions"><button id="uploadMat">Загрузить</button></div>
+</div>
+<div id="materialsList">Загрузка...</div>
+</section>
+<section id="video" class="panel hidden">
+<h2>Видеовстреча</h2>
+<p class="muted">Видеовстречи открываются через Jitsi.</p>
+<div id="videoAdmin" class="card hidden">
+<h3>Создать комнату</h3>
+<div class="actions"><button id="createRoom">Создать комнату</button></div>
+<div id="roomCreated"></div>
+</div>
+<label>Код комнаты</label><input id="roomCode" placeholder="Введите код комнаты">
+<div class="actions"><button id="joinRoom">Присоединиться</button></div>
+</section>
+<section id="admin" class="panel hidden">
+<h2>Панель администратора</h2>
+<div class="card">
+<h3>Добавить студента</h3>
+<label>ФИО</label><input id="newName">
+<label>Email</label><input id="newEmail" type="email">
+<label>Временный пароль (не менее 8 символов)</label><input id="newPassword" type="password">
+<label>Группа</label>
+<select id="newSubgroup"><option>1 группа</option><option>2 группа</option></select>
+<div class="actions"><button id="createStudent">Создать аккаунт</button></div>
+<div id="createStudentMsg"></div>
+</div>
+<div class="card">
+<h3>Новое объявление</h3>
+<textarea id="newAnnouncement"></textarea>
+<div class="actions"><button id="publishAnnouncement">Опубликовать</button></div>
+</div>
+<div class="card">
+<h3>Добавить занятие</h3>
+<label>Название</label><input id="lessonTitle">
+<label>Дата и время</label><input id="lessonDate" type="datetime-local">
+<label>Группа</label>
+<select id="lessonGroup"><option>Все группы</option><option>1 группа</option><option>2 группа</option></select>
+<div class="actions"><button id="addLesson">Добавить в расписание</button></div>
+</div>
+<div class="card">
+<h3>Отметить посещаемость</h3>
+<label>Студент</label><select id="attendanceStudent"></select>
+<label>Дата</label><input id="attendanceDate" type="date">
+<label>Занятие</label><input id="attendanceTitle">
+<label>Статус</label>
+<select id="attendanceStatus">
+<option value="present">Присутствовал</option>
+<option value="absent">Отсутствовал</option>
+<option value="late">Опоздал</option>
+</select>
+<div class="actions"><button id="markAttendance">Сохранить отметку</button></div>
+</div>
+<div class="card"><h3>Список студентов</h3><div id="studentList">Загрузка...</div></div>
+</section>
+<div id="appMsg" class="status hidden"></div>
+</section>
+</main>
+
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#145b8c">
+<title>Стомат Туркменистан</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<style>
+:root{font-family:system-ui,sans-serif;color:#172536;background:#f3f6fa}
+*{box-sizing:border-box}
+body{margin:0}
+header{background:#145b8c;color:white;padding:18px 16px}
+header h1{font-size:20px;margin:0 0 4px}
+header p{margin:0;font-size:13px}
+main{max-width:900px;margin:auto;padding:14px}
+.panel,.card{background:white;border:1px solid #e2e8f0;border-radius:14px;padding:15px;margin-bottom:13px}
+h2{font-size:18px;margin:0 0 12px}
+h3{font-size:15px;margin:0 0 8px}
+label{display:block;font-size:13px;font-weight:600;margin:10px 0 5px}
+input,textarea,select,button{font:inherit}
+input,textarea,select{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:9px;background:white}
+textarea{min-height:80px}
+button{border:0;border-radius:9px;padding:11px 14px;background:#145b8c;color:white;font-weight:600}
+button.secondary{background:#e8f0f7;color:#145b8c}
+button.danger{background:#b42318}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.tabs{display:flex;gap:7px;overflow:auto;padding:2px 0 12px}
+.tabs button{white-space:nowrap;padding:9px 12px}
+.tabs button.active{background:#0b3f65}
+.hidden{display:none!important}
+.muted{color:#64748b;font-size:13px}
+.item{padding:11px 0;border-bottom:1px solid #edf1f5}
+.tag{display:inline-block;background:#e8f0f7;color:#145b8c;padding:3px 8px;border-radius:20px;font-size:12px}
+.status{padding:10px;border-radius:9px;background:#eff6ff;color:#1e40af;margin:10px 0;font-size:13px}
+.error{background:#fef2f2;color:#991b1b}
+.success{background:#ecfdf3;color:#166534}
+.topline{display:flex;justify-content:space-between;gap:10px;align-items:center}
+a{color:#145b8c}
+</style>
+</head>
+<body>
+<header>
+<h1>Стомат Туркменистан</h1>
+<p>Стома 3 семестр · учебная группа</p>
+</header>
+<main>
+<section id="auth" class="panel">
+<h2>Вход в систему</h2>
+<div id="configWarning" class="status error hidden">Не найдены настройки Supabase в config.js.</div>
+<label>Электронная почта</label>
+<input id="email" type="email" placeholder="name@example.com">
+<label>Пароль</label>
+<input id="password" type="password" placeholder="Пароль">
+<div class="actions"><button id="loginBtn">Войти</button></div>
+<p class="muted">Если аккаунт ещё не создан, попросите администратора добавить вас в список студентов.</p>
+<div id="authMsg" class="status hidden"></div>
+</section>
+
+<section id="app" class="hidden">
+<div class="panel topline">
+<div><strong id="userName">Пользователь</strong><div class="muted" id="userMeta"></div></div>
+<button class="secondary" id="logoutBtn">Выйти</button>
+</div>
+<nav class="tabs" id="tabs">
+<button class="active" data-tab="news">Объявления</button>
+<button data-tab="schedule">Расписание</button>
+<button data-tab="chat">Чат</button>
+<button data-tab="attendance">Посещаемость</button>
+<button data-tab="report">Отчёт</button>
+<button data-tab="materials">Материалы</button>
+<button data-tab="video">Видеовстреча</button>
+<button data-tab="admin" id="adminTab" class="hidden">Админ</button>
+</nav>
+
+<section id="news" class="panel"><h2>Объявления</h2><div id="newsList">Загрузка...</div></section>
+<section id="schedule" class="panel hidden"><h2>Расписание</h2><div id="lessonList">Загрузка...</div></section>
+<section id="chat" class="panel hidden">
+<h2>Групповой чат</h2>
+<div id="chatList"></div>
+<label>Сообщение</label>
+<textarea id="chatText" placeholder="Напишите сообщение..."></textarea>
+<div class="actions"><button id="sendChat">Отправить</button></div>
+</section>
+<section id="attendance" class="panel hidden"><h2>Посещаемость</h2><div id="attendanceList"></div></section>
+<section id="report" class="panel hidden"><h2>Отчёт за неделю</h2><div id="reportContent">Загрузка...</div></section>
+<section id="materials" class="panel hidden">
+<h2>Учебные материалы</h2>
+<div id="uploadBox" class="card hidden">
+<h3>Добавить материал</h3>
+<label>Название</label><input id="matTitle">
+<label>Описание</label><textarea id="matDesc"></textarea>
+<label>Файл (до 20 МБ)</label><input id="matFile" type="file">
+<div class="actions"><button id="uploadMat">Загрузить</button></div>
+</div>
+<div id="materialsList">Загрузка...</div>
+</section>
+<section id="video" class="panel hidden">
+<h2>Видеовстреча</h2>
+<p class="muted">Видеовстречи открываются через Jitsi.</p>
+<div id="videoAdmin" class="card hidden">
+<h3>Создать комнату</h3>
+<div class="actions"><button id="createRoom">Создать комнату</button></div>
+<div id="roomCreated"></div>
+</div>
+<label>Код комнаты</label><input id="roomCode" placeholder="Введите код комнаты">
+<div class="actions"><button id="joinRoom">Присоединиться</button></div>
+</section>
+<section id="admin" class="panel hidden">
+<h2>Панель администратора</h2>
+<div class="card">
+<h3>Добавить студента</h3>
+<label>ФИО</label><input id="newName">
+<label>Email</label><input id="newEmail" type="email">
+<label>Временный пароль (не менее 8 символов)</label><input id="newPassword" type="password">
+<label>Группа</label>
+<select id="newSubgroup"><option>1 группа</option><option>2 группа</option></select>
+<div class="actions"><button id="createStudent">Создать аккаунт</button></div>
+<div id="createStudentMsg"></div>
+</div>
+<div class="card">
+<h3>Новое объявление</h3>
+<textarea id="newAnnouncement"></textarea>
+<div class="actions"><button id="publishAnnouncement">Опубликовать</button></div>
+</div>
+<div class="card">
+<h3>Добавить занятие</h3>
+<label>Название</label><input id="lessonTitle">
+<label>Дата и время</label><input id="lessonDate" type="datetime-local">
+<label>Группа</label>
+<select id="lessonGroup"><option>Все группы</option><option>1 группа</option><option>2 группа</option></select>
+<div class="actions"><button id="addLesson">Добавить в расписание</button></div>
+</div>
+<div class="card">
+<h3>Отметить посещаемость</h3>
+<label>Студент</label><select id="attendanceStudent"></select>
+<label>Дата</label><input id="attendanceDate" type="date">
+<label>Занятие</label><input id="attendanceTitle">
+<label>Статус</label>
+<select id="attendanceStatus">
+<option value="present">Присутствовал</option>
+<option value="absent">Отсутствовал</option>
+<option value="late">Опоздал</option>
+</select>
+<div class="actions"><button id="markAttendance">Сохранить отметку</button></div>
+</div>
+<div class="card"><h3>Список студентов</h3><div id="studentList">Загрузка...</div></div>
+</section>
+<div id="appMsg" class="status hidden"></div>
+</section>
+</main>
+
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#145b8c">
+<title>Стомат Туркменистан</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<style>
+:root{font-family:system-ui,sans-serif;color:#172536;background:#f3f6fa}
+*{box-sizing:border-box}
+body{margin:0}
+header{background:#145b8c;color:white;padding:18px 16px}
+header h1{font-size:20px;margin:0 0 4px}
+header p{margin:0;font-size:13px}
+main{max-width:900px;margin:auto;padding:14px}
+.panel,.card{background:white;border:1px solid #e2e8f0;border-radius:14px;padding:15px;margin-bottom:13px}
+h2{font-size:18px;margin:0 0 12px}
+h3{font-size:15px;margin:0 0 8px}
+label{display:block;font-size:13px;font-weight:600;margin:10px 0 5px}
+input,textarea,select,button{font:inherit}
+input,textarea,select{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:9px;background:white}
+textarea{min-height:80px}
+button{border:0;border-radius:9px;padding:11px 14px;background:#145b8c;color:white;font-weight:600}
+button.secondary{background:#e8f0f7;color:#145b8c}
+button.danger{background:#b42318}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.tabs{display:flex;gap:7px;overflow:auto;padding:2px 0 12px}
+.tabs button{white-space:nowrap;padding:9px 12px}
+.tabs button.active{background:#0b3f65}
+.hidden{display:none!important}
+.muted{color:#64748b;font-size:13px}
+.item{padding:11px 0;border-bottom:1px solid #edf1f5}
+.tag{display:inline-block;background:#e8f0f7;color:#145b8c;padding:3px 8px;border-radius:20px;font-size:12px}
+.status{padding:10px;border-radius:9px;background:#eff6ff;color:#1e40af;margin:10px 0;font-size:13px}
+.error{background:#fef2f2;color:#991b1b}
+.success{background:#ecfdf3;color:#166534}
+.topline{display:flex;justify-content:space-between;gap:10px;align-items:center}
+a{color:#145b8c}
+</style>
+</head>
+<body>
+<header>
+<h1>Стомат Туркменистан</h1>
+<p>Стома 3 семестр · учебная группа</p>
+</header>
+<main>
+<section id="auth" class="panel">
+<h2>Вход в систему</h2>
+<div id="configWarning" class="status error hidden">Не найдены настройки Supabase в config.js.</div>
+<label>Электронная почта</label>
+<input id="email" type="email" placeholder="name@example.com">
+<label>Пароль</label>
+<input id="password" type="password" placeholder="Пароль">
+<div class="actions"><button id="loginBtn">Войти</button></div>
+<p class="muted">Если аккаунт ещё не создан, попросите администратора добавить вас в список студентов.</p>
+<div id="authMsg" class="status hidden"></div>
+</section>
+
+<section id="app" class="hidden">
+<div class="panel topline">
+<div><strong id="userName">Пользователь</strong><div class="muted" id="userMeta"></div></div>
+<button class="secondary" id="logoutBtn">Выйти</button>
+</div>
+<nav class="tabs" id="tabs">
+<button class="active" data-tab="news">Объявления</button>
+<button data-tab="schedule">Расписание</button>
+<button data-tab="chat">Чат</button>
+<button data-tab="attendance">Посещаемость</button>
+<button data-tab="report">Отчёт</button>
+<button data-tab="materials">Материалы</button>
+<button data-tab="video">Видеовстреча</button>
+<button data-tab="admin" id="adminTab" class="hidden">Админ</button>
+</nav>
+
+<section id="news" class="panel"><h2>Объявления</h2><div id="newsList">Загрузка...</div></section>
+<section id="schedule" class="panel hidden"><h2>Расписание</h2><div id="lessonList">Загрузка...</div></section>
+<section id="chat" class="panel hidden">
+<h2>Групповой чат</h2>
+<div id="chatList"></div>
+<label>Сообщение</label>
+<textarea id="chatText" placeholder="Напишите сообщение..."></textarea>
+<div class="actions"><button id="sendChat">Отправить</button></div>
+</section>
+<section id="attendance" class="panel hidden"><h2>Посещаемость</h2><div id="attendanceList"></div></section>
+<section id="report" class="panel hidden"><h2>Отчёт за неделю</h2><div id="reportContent">Загрузка...</div></section>
+<section id="materials" class="panel hidden">
+<h2>Учебные материалы</h2>
+<div id="uploadBox" class="card hidden">
+<h3>Добавить материал</h3>
+<label>Название</label><input id="matTitle">
+<label>Описание</label><textarea id="matDesc"></textarea>
+<label>Файл (до 20 МБ)</label><input id="matFile" type="file">
+<div class="actions"><button id="uploadMat">Загрузить</button></div>
+</div>
+<div id="materialsList">Загрузка...</div>
+</section>
+<section id="video" class="panel hidden">
+<h2>Видеовстреча</h2>
+<p class="muted">Видеовстречи открываются через Jitsi.</p>
+<div id="videoAdmin" class="card hidden">
+<h3>Создать комнату</h3>
+<div class="actions"><button id="createRoom">Создать комнату</button></div>
+<div id="roomCreated"></div>
+</div>
+<label>Код комнаты</label><input id="roomCode" placeholder="Введите код комнаты">
+<div class="actions"><button id="joinRoom">Присоединиться</button></div>
+</section>
+<section id="admin" class="panel hidden">
+<h2>Панель администратора</h2>
+<div class="card">
+<h3>Добавить студента</h3>
+<label>ФИО</label><input id="newName">
+<label>Email</label><input id="newEmail" type="email">
+<label>Временный пароль (не менее 8 символов)</label><input id="newPassword" type="password">
+<label>Группа</label>
+<select id="newSubgroup"><option>1 группа</option><option>2 группа</option></select>
+<div class="actions"><button id="createStudent">Создать аккаунт</button></div>
+<div id="createStudentMsg"></div>
+</div>
+<div class="card">
+<h3>Новое объявление</h3>
+<textarea id="newAnnouncement"></textarea>
+<div class="actions"><button id="publishAnnouncement">Опубликовать</button></div>
+</div>
+<div class="card">
+<h3>Добавить занятие</h3>
+<label>Название</label><input id="lessonTitle">
+<label>Дата и время</label><input id="lessonDate" type="datetime-local">
+<label>Группа</label>
+<select id="lessonGroup"><option>Все группы</option><option>1 группа</option><option>2 группа</option></select>
+<div class="actions"><button id="addLesson">Добавить в расписание</button></div>
+</div>
+<div class="card">
+<h3>Отметить посещаемость</h3>
+<label>Студент</label><select id="attendanceStudent"></select>
+<label>Дата</label><input id="attendanceDate" type="date">
+<label>Занятие</label><input id="attendanceTitle">
+<label>Статус</label>
+<select id="attendanceStatus">
+<option value="present">Присутствовал</option>
+<option value="absent">Отсутствовал</option>
+<option value="late">Опоздал</option>
+</select>
+<div class="actions"><button id="markAttendance">Сохранить отметку</button></div>
+</div>
+<div class="card"><h3>Список студентов</h3><div id="studentList">Загрузка...</div></div>
+</section>
+<div id="appMsg" class="status hidden"></div>
+</section>
+</main>
+
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#145b8c">
+<title>Стомат Туркменистан</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<style>
+:root{font-family:system-ui,sans-serif;color:#172536;background:#f3f6fa}
+*{box-sizing:border-box}
+body{margin:0}
+header{background:#145b8c;color:white;padding:18px 16px}
+header h1{font-size:20px;margin:0 0 4px}
+header p{margin:0;font-size:13px}
+main{max-width:900px;margin:auto;padding:14px}
+.panel,.card{background:white;border:1px solid #e2e8f0;border-radius:14px;padding:15px;margin-bottom:13px}
+h2{font-size:18px;margin:0 0 12px}
+h3{font-size:15px;margin:0 0 8px}
+label{display:block;font-size:13px;font-weight:600;margin:10px 0 5px}
+input,textarea,select,button{font:inherit}
+input,textarea,select{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:9px;background:white}
+textarea{min-height:80px}
+button{border:0;border-radius:9px;padding:11px 14px;background:#145b8c;color:white;font-weight:600}
+button.secondary{background:#e8f0f7;color:#145b8c}
+button.danger{background:#b42318}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.tabs{display:flex;gap:7px;overflow:auto;padding:2px 0 12px}
+.tabs button{white-space:nowrap;padding:9px 12px}
+.tabs button.active{background:#0b3f65}
+.hidden{display:none!important}
+.muted{color:#64748b;font-size:13px}
+.item{padding:11px 0;border-bottom:1px solid #edf1f5}
+.tag{display:inline-block;background:#e8f0f7;color:#145b8c;padding:3px 8px;border-radius:20px;font-size:12px}
+.status{padding:10px;border-radius:9px;background:#eff6ff;color:#1e40af;margin:10px 0;font-size:13px}
+.error{background:#fef2f2;color:#991b1b}
+.success{background:#ecfdf3;color:#166534}
+.topline{display:flex;justify-content:space-between;gap:10px;align-items:center}
+a{color:#145b8c}
+</style>
+</head>
+<body>
+<header>
+<h1>Стомат Туркменистан</h1>
+<p>Стома 3 семестр · учебная группа</p>
+</header>
+<main>
+<section id="auth" class="panel">
+<h2>Вход в систему</h2>
+<div id="configWarning" class="status error hidden">Не найдены настройки Supabase в config.js.</div>
+<label>Электронная почта</label>
+<input id="email" type="email" placeholder="name@example.com">
+<label>Пароль</label>
+<input id="password" type="password" placeholder="Пароль">
+<div class="actions"><button id="loginBtn">Войти</button></div>
+<p class="muted">Если аккаунт ещё не создан, попросите администратора добавить вас в список студентов.</p>
+<div id="authMsg" class="status hidden"></div>
+</section>
+
+<section id="app" class="hidden">
+<div class="panel topline">
+<div><strong id="userName">Пользователь</strong><div class="muted" id="userMeta"></div></div>
+<button class="secondary" id="logoutBtn">Выйти</button>
+</div>
+<nav class="tabs" id="tabs">
+<button class="active" data-tab="news">Объявления</button>
+<button data-tab="schedule">Расписание</button>
+<button data-tab="chat">Чат</button>
+<button data-tab="attendance">Посещаемость</button>
+<button data-tab="report">Отчёт</button>
+<button data-tab="materials">Материалы</button>
+<button data-tab="video">Видеовстреча</button>
+<button data-tab="admin" id="adminTab" class="hidden">Админ</button>
+</nav>
+
+<section id="news" class="panel"><h2>Объявления</h2><div id="newsList">Загрузка...</div></section>
+<section id="schedule" class="panel hidden"><h2>Расписание</h2><div id="lessonList">Загрузка...</div></section>
+<section id="chat" class="panel hidden">
+<h2>Групповой чат</h2>
+<div id="chatList"></div>
+<label>Сообщение</label>
+<textarea id="chatText" placeholder="Напишите сообщение..."></textarea>
+<div class="actions"><button id="sendChat">Отправить</button></div>
+</section>
+<section id="attendance" class="panel hidden"><h2>Посещаемость</h2><div id="attendanceList"></div></section>
+<section id="report" class="panel hidden"><h2>Отчёт за неделю</h2><div id="reportContent">Загрузка...</div></section>
+<section id="materials" class="panel hidden">
+<h2>Учебные материалы</h2>
+<div id="uploadBox" class="card hidden">
+<h3>Добавить материал</h3>
+<label>Название</label><input id="matTitle">
+<label>Описание</label><textarea id="matDesc"></textarea>
+<label>Файл (до 20 МБ)</label><input id="matFile" type="file">
+<div class="actions"><button id="uploadMat">Загрузить</button></div>
+</div>
+<div id="materialsList">Загрузка...</div>
+</section>
+<section id="video" class="panel hidden">
+<h2>Видеовстреча</h2>
+<p class="muted">Видеовстречи открываются через Jitsi.</p>
+<div id="videoAdmin" class="card hidden">
+<h3>Создать комнату</h3>
+<div class="actions"><button id="createRoom">Создать комнату</button></div>
+<div id="roomCreated"></div>
+</div>
+<label>Код комнаты</label><input id="roomCode" placeholder="Введите код комнаты">
+<div class="actions"><button id="joinRoom">Присоединиться</button></div>
+</section>
+<section id="admin" class="panel hidden">
+<h2>Панель администратора</h2>
+<div class="card">
+<h3>Добавить студента</h3>
+<label>ФИО</label><input id="newName">
+<label>Email</label><input id="newEmail" type="email">
+<label>Временный пароль (не менее 8 символов)</label><input id="newPassword" type="password">
+<label>Группа</label>
+<select id="newSubgroup"><option>1 группа</option><option>2 группа</option></select>
+<div class="actions"><button id="createStudent">Создать аккаунт</button></div>
+<div id="createStudentMsg"></div>
+</div>
+<div class="card">
+<h3>Новое объявление</h3>
+<textarea id="newAnnouncement"></textarea>
+<div class="actions"><button id="publishAnnouncement">Опубликовать</button></div>
+</div>
+<div class="card">
+<h3>Добавить занятие</h3>
+<label>Название</label><input id="lessonTitle">
+<label>Дата и время</label><input id="lessonDate" type="datetime-local">
+<label>Группа</label>
+<select id="lessonGroup"><option>Все группы</option><option>1 группа</option><option>2 группа</option></select>
+<div class="actions"><button id="addLesson">Добавить в расписание</button></div>
+</div>
+<div class="card">
+<h3>Отметить посещаемость</h3>
+<label>Студент</label><select id="attendanceStudent"></select>
+<label>Дата</label><input id="attendanceDate" type="date">
+<label>Занятие</label><input id="attendanceTitle">
+<label>Статус</label>
+<select id="attendanceStatus">
+<option value="present">Присутствовал</option>
+<option value="absent">Отсутствовал</option>
+<option value="late">Опоздал</option>
+</select>
+<div class="actions"><button id="markAttendance">Сохранить отметку</button></div>
+</div>
+<div class="card"><h3>Список студентов</h3><div id="studentList">Загрузка...</div></div>
+</section>
+<div id="appMsg" class="status hidden"></div>
+</section>
+</main>
+
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#145b8c">
+<title>Стомат Туркменистан</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<style>
+:root{font-family:system-ui,sans-serif;color:#172536;background:#f3f6fa}
+*{box-sizing:border-box}
+body{margin:0}
+header{background:#145b8c;color:white;padding:18px 16px}
+header h1{font-size:20px;margin:0 0 4px}
+header p{margin:0;font-size:13px}
+main{max-width:900px;margin:auto;padding:14px}
+.panel,.card{background:white;border:1px solid #e2e8f0;border-radius:14px;padding:15px;margin-bottom:13px}
+h2{font-size:18px;margin:0 0 12px}
+h3{font-size:15px;margin:0 0 8px}
+label{display:block;font-size:13px;font-weight:600;margin:10px 0 5px}
+input,textarea,select,button{font:inherit}
+input,textarea,select{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:9px;background:white}
+textarea{min-height:80px}
+button{border:0;border-radius:9px;padding:11px 14px;background:#145b8c;color:white;font-weight:600}
+button.secondary{background:#e8f0f7;color:#145b8c}
+button.danger{background:#b42318}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.tabs{display:flex;gap:7px;overflow:auto;padding:2px 0 12px}
+.tabs button{white-space:nowrap;padding:9px 12px}
+.tabs button.active{background:#0b3f65}
+.hidden{display:none!important}
+.muted{color:#64748b;font-size:13px}
+.item{padding:11px 0;border-bottom:1px solid #edf1f5}
+.tag{display:inline-block;background:#e8f0f7;color:#145b8c;padding:3px 8px;border-radius:20px;font-size:12px}
+.status{padding:10px;border-radius:9px;background:#eff6ff;color:#1e40af;margin:10px 0;font-size:13px}
+.error{background:#fef2f2;color:#991b1b}
+.success{background:#ecfdf3;color:#166534}
+.topline{display:flex;justify-content:space-between;gap:10px;align-items:center}
+a{color:#145b8c}
+</style>
+</head>
+<body>
+<header>
+<h1>Стомат Туркменистан</h1>
+<p>Стома 3 семестр · учебная группа</p>
+</header>
+<main>
+<section id="auth" class="panel">
+<h2>Вход в систему</h2>
+<div id="configWarning" class="status error hidden">Не найдены настройки Supabase в config.js.</div>
+<label>Электронная почта</label>
+<input id="email" type="email" placeholder="name@example.com">
+<label>Пароль</label>
+<input id="password" type="password" placeholder="Пароль">
+<div class="actions"><button id="loginBtn">Войти</button></div>
+<p class="muted">Если аккаунт ещё не создан, попросите администратора добавить вас в список студентов.</p>
+<div id="authMsg" class="status hidden"></div>
+</section>
+
+<section id="app" class="hidden">
+<div class="panel topline">
+<div><strong id="userName">Пользователь</strong><div class="muted" id="userMeta"></div></div>
+<button class="secondary" id="logoutBtn">Выйти</button>
+</div>
+<nav class="tabs" id="tabs">
+<button class="active" data-tab="news">Объявления</button>
+<button data-tab="schedule">Расписание</button>
+<button data-tab="chat">Чат</button>
+<button data-tab="attendance">Посещаемость</button>
+<button data-tab="report">Отчёт</button>
+<button data-tab="materials">Материалы</button>
+<button data-tab="video">Видеовстреча</button>
+<button data-tab="admin" id="adminTab" class="hidden">Админ</button>
+</nav>
+
+<section id="news" class="panel"><h2>Объявления</h2><div id="newsList">Загрузка...</div></section>
+<section id="schedule" class="panel hidden"><h2>Расписание</h2><div id="lessonList">Загрузка...</div></section>
+<section id="chat" class="panel hidden">
+<h2>Групповой чат</h2>
+<div id="chatList"></div>
+<label>Сообщение</label>
+<textarea id="chatText" placeholder="Напишите сообщение..."></textarea>
+<div class="actions"><button id="sendChat">Отправить</button></div>
+</section>
+<section id="attendance" class="panel hidden"><h2>Посещаемость</h2><div id="attendanceList"></div></section>
+<section id="report" class="panel hidden"><h2>Отчёт за неделю</h2><div id="reportContent">Загрузка...</div></section>
+<section id="materials" class="panel hidden">
+<h2>Учебные материалы</h2>
+<div id="uploadBox" class="card hidden">
+<h3>Добавить материал</h3>
+<label>Название</label><input id="matTitle">
+<label>Описание</label><textarea id="matDesc"></textarea>
+<label>Файл (до 20 МБ)</label><input id="matFile" type="file">
+<div class="actions"><button id="uploadMat">Загрузить</button></div>
+</div>
+<div id="materialsList">Загрузка...</div>
+</section>
+<section id="video" class="panel hidden">
+<h2>Видеовстреча</h2>
+<p class="muted">Видеовстречи открываются через Jitsi.</p>
+<div id="videoAdmin" class="card hidden">
+<h3>Создать комнату</h3>
+<div class="actions"><button id="createRoom">Создать комнату</button></div>
+<div id="roomCreated"></div>
+</div>
+<label>Код комнаты</label><input id="roomCode" placeholder="Введите код комнаты">
+<div class="actions"><button id="joinRoom">Присоединиться</button></div>
+</section>
+<section id="admin" class="panel hidden">
+<h2>Панель администратора</h2>
+<div class="card">
+<h3>Добавить студента</h3>
+<label>ФИО</label><input id="newName">
+<label>Email</label><input id="newEmail" type="email">
+<label>Временный пароль (не менее 8 символов)</label><input id="newPassword" type="password">
+<label>Группа</label>
+<select id="newSubgroup"><option>1 группа</option><option>2 группа</option></select>
+<div class="actions"><button id="createStudent">Создать аккаунт</button></div>
+<div id="createStudentMsg"></div>
+</div>
+<div class="card">
+<h3>Новое объявление</h3>
+<textarea id="newAnnouncement"></textarea>
+<div class="actions"><button id="publishAnnouncement">Опубликовать</button></div>
+</div>
+<div class="card">
+<h3>Добавить занятие</h3>
+<label>Название</label><input id="lessonTitle">
+<label>Дата и время</label><input id="lessonDate" type="datetime-local">
+<label>Группа</label>
+<select id="lessonGroup"><option>Все группы</option><option>1 группа</option><option>2 группа</option></select>
+<div class="actions"><button id="addLesson">Добавить в расписание</button></div>
+</div>
+<div class="card">
+<h3>Отметить посещаемость</h3>
+<label>Студент</label><select id="attendanceStudent"></select>
+<label>Дата</label><input id="attendanceDate" type="date">
+<label>Занятие</label><input id="attendanceTitle">
+<label>Статус</label>
+<select id="attendanceStatus">
+<option value="present">Присутствовал</option>
+<option value="absent">Отсутствовал</option>
+<option value="late">Опоздал</option>
+</select>
+<div class="actions"><button id="markAttendance">Сохранить отметку</button></div>
+</div>
+<div class="card"><h3>Список студентов</h3><div id="studentList">Загрузка...</div></div>
+</section>
+<div id="appMsg" class="status hidden"></div>
+</section>
+</main>
+
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#145b8c">
+<title>Стомат Туркменистан</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<style>
+:root{font-family:system-ui,sans-serif;color:#172536;background:#f3f6fa}
+*{box-sizing:border-box}
+body{margin:0}
+header{background:#145b8c;color:white;padding:18px 16px}
+header h1{font-size:20px;margin:0 0 4px}
+header p{margin:0;font-size:13px}
+main{max-width:900px;margin:auto;padding:14px}
+.panel,.card{background:white;border:1px solid #e2e8f0;border-radius:14px;padding:15px;margin-bottom:13px}
+h2{font-size:18px;margin:0 0 12px}
+h3{font-size:15px;margin:0 0 8px}
+label{display:block;font-size:13px;font-weight:600;margin:10px 0 5px}
+input,textarea,select,button{font:inherit}
+input,textarea,select{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:9px;background:white}
+textarea{min-height:80px}
+button{border:0;border-radius:9px;padding:11px 14px;background:#145b8c;color:white;font-weight:600}
+button.secondary{background:#e8f0f7;color:#145b8c}
+button.danger{background:#b42318}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.tabs{display:flex;gap:7px;overflow:auto;padding:2px 0 12px}
+.tabs button{white-space:nowrap;padding:9px 12px}
+.tabs button.active{background:#0b3f65}
+.hidden{display:none!important}
+.muted{color:#64748b;font-size:13px}
+.item{padding:11px 0;border-bottom:1px solid #edf1f5}
+.tag{display:inline-block;background:#e8f0f7;color:#145b8c;padding:3px 8px;border-radius:20px;font-size:12px}
+.status{padding:10px;border-radius:9px;background:#eff6ff;color:#1e40af;margin:10px 0;font-size:13px}
+.error{background:#fef2f2;color:#991b1b}
+.success{background:#ecfdf3;color:#166534}
+.topline{display:flex;justify-content:space-between;gap:10px;align-items:center}
+a{color:#145b8c}
+</style>
+</head>
+<body>
+<header>
+<h1>Стомат Туркменистан</h1>
+<p>Стома 3 семестр · учебная группа</p>
+</header>
+<main>
+<section id="auth" class="panel">
+<h2>Вход в систему</h2>
+<div id="configWarning" class="status error hidden">Не найдены настройки Supabase в config.js.</div>
+<label>Электронная почта</label>
+<input id="email" type="email" placeholder="name@example.com">
+<label>Пароль</label>
+<input id="password" type="password" placeholder="Пароль">
+<div class="actions"><button id="loginBtn">Войти</button></div>
+<p class="muted">Если аккаунт ещё не создан, попросите администратора добавить вас в список студентов.</p>
+<div id="authMsg" class="status hidden"></div>
+</section>
+
+<section id="app" class="hidden">
+<div class="panel topline">
+<div><strong id="userName">Пользователь</strong><div class="muted" id="userMeta"></div></div>
+<button class="secondary" id="logoutBtn">Выйти</button>
+</div>
+<nav class="tabs" id="tabs">
+<button class="active" data-tab="news">Объявления</button>
+<button data-tab="schedule">Расписание</button>
+<button data-tab="chat">Чат</button>
+<button data-tab="attendance">Посещаемость</button>
+<button data-tab="report">Отчёт</button>
+<button data-tab="materials">Материалы</button>
+<button data-tab="video">Видеовстреча</button>
+<button data-tab="admin" id="adminTab" class="hidden">Админ</button>
+</nav>
+
+<section id="news" class="panel"><h2>Объявления</h2><div id="newsList">Загрузка...</div></section>
+<section id="schedule" class="panel hidden"><h2>Расписание</h2><div id="lessonList">Загрузка...</div></section>
+<section id="chat" class="panel hidden">
+<h2>Групповой чат</h2>
+<div id="chatList"></div>
+<label>Сообщение</label>
+<textarea id="chatText" placeholder="Напишите сообщение..."></textarea>
+<div class="actions"><button id="sendChat">Отправить</button></div>
+</section>
+<section id="attendance" class="panel hidden"><h2>Посещаемость</h2><div id="attendanceList"></div></section>
+<section id="report" class="panel hidden"><h2>Отчёт за неделю</h2><div id="reportContent">Загрузка...</div></section>
+<section id="materials" class="panel hidden">
+<h2>Учебные материалы</h2>
+<div id="uploadBox" class="card hidden">
+<h3>Добавить материал</h3>
+<label>Название</label><input id="matTitle">
+<label>Описание</label><textarea id="matDesc"></textarea>
+<label>Файл (до 20 МБ)</label><input id="matFile" type="file">
+<div class="actions"><button id="uploadMat">Загрузить</button></div>
+</div>
+<div id="materialsList">Загрузка...</div>
+</section>
+<section id="video" class="panel hidden">
+<h2>Видеовстреча</h2>
+<p class="muted">Видеовстречи открываются через Jitsi.</p>
+<div id="videoAdmin" class="card hidden">
+<h3>Создать комнату</h3>
+<div class="actions"><button id="createRoom">Создать комнату</button></div>
+<div id="roomCreated"></div>
+</div>
+<label>Код комнаты</label><input id="roomCode" placeholder="Введите код комнаты">
+<div class="actions"><button id="joinRoom">Присоединиться</button></div>
+</section>
+<section id="admin" class="panel hidden">
+<h2>Панель администратора</h2>
+<div class="card">
+<h3>Добавить студента</h3>
+<label>ФИО</label><input id="newName">
+<label>Email</label><input id="newEmail" type="email">
+<label>Временный пароль (не менее 8 символов)</label><input id="newPassword" type="password">
+<label>Группа</label>
+<select id="newSubgroup"><option>1 группа</option><option>2 группа</option></select>
+<div class="actions"><button id="createStudent">Создать аккаунт</button></div>
+<div id="createStudentMsg"></div>
+</div>
+<div class="card">
+<h3>Новое объявление</h3>
+<textarea id="newAnnouncement"></textarea>
+<div class="actions"><button id="publishAnnouncement">Опубликовать</button></div>
+</div>
+<div class="card">
+<h3>Добавить занятие</h3>
+<label>Название</label><input id="lessonTitle">
+<label>Дата и время</label><input id="lessonDate" type="datetime-local">
+<label>Группа</label>
+<select id="lessonGroup"><option>Все группы</option><option>1 группа</option><option>2 группа</option></select>
+<div class="actions"><button id="addLesson">Добавить в расписание</button></div>
+</div>
+<div class="card">
+<h3>Отметить посещаемость</h3>
+<label>Студент</label><select id="attendanceStudent"></select>
+<label>Дата</label><input id="attendanceDate" type="date">
+<label>Занятие</label><input id="attendanceTitle">
+<label>Статус</label>
+<select id="attendanceStatus">
+<option value="present">Присутствовал</option>
+<option value="absent">Отсутствовал</option>
+<option value="late">Опоздал</option>
+</select>
+<div class="actions"><button id="markAttendance">Сохранить отметку</button></div>
+</div>
+<div class="card"><h3>Список студентов</h3><div id="studentList">Загрузка...</div></div>
+</section>
+<div id="appMsg" class="status hidden"></div>
+</section>
+</main>
+
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#145b8c">
+<title>Стомат Туркменистан</title>
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="icon" href="./icon.svg" type="image/svg+xml">
+<style>
+:root{font-family:system-ui,sans-serif;color:#172536;background:#f3f6fa}
+*{box-sizing:border-box}
+body{margin:0}
+header{background:#145b8c;color:white;padding:18px 16px}
+header h1{font-size:20px;margin:0 0 4px}
+header p{margin:0;font-size:13px}
+main{max-width:900px;margin:auto;padding:14px}
+.panel,.card{background:white;border:1px solid #e2e8f0;border-radius:14px;padding:15px;margin-bottom:13px}
+h2{font-size:18px;margin:0 0 12px}
+h3{font-size:15px;margin:0 0 8px}
+label{display:block;font-size:13px;font-weight:600;margin:10px 0 5px}
+input,textarea,select,button{font:inherit}
+input,textarea,select{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:9px;background:white}
+textarea{min-height:80px}
+button{border:0;border-radius:9px;padding:11px 14px;background:#145b8c;color:white;font-weight:600}
+button.secondary{background:#e8f0f7;color:#145b8c}
+button.danger{background:#b42318}
+.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.tabs{display:flex;gap:7px;overflow:auto;padding:2px 0 12px}
+.tabs button{white-space:nowrap;padding:9px 12px}
+.tabs button.active{background:#0b3f65}
+.hidden{display:none!important}
+.muted{color:#64748b;font-size:13px}
+.item{padding:11px 0;border-bottom:1px solid #edf1f5}
+.tag{display:inline-block;background:#e8f0f7;color:#145b8c;padding:3px 8px;border-radius:20px;font-size:12px}
+.status{padding:10px;border-radius:9px;background:#eff6ff;color:#1e40af;margin:10px 0;font-size:13px}
+.error{background:#fef2f2;color:#991b1b}
+.success{background:#ecfdf3;color:#166534}
+.topline{display:flex;justify-content:space-between;gap:10px;align-items:center}
+a{color:#145b8c}
+</style>
+</head>
+<body>
+<header>
+<h1>Стомат Туркменистан</h1>
+<p>Стома 3 семестр · учебная группа</p>
+</header>
+<main>
+<section id="auth" class="panel">
+<h2>Вход в систему</h2>
+<div id="configWarning" class="status error hidden">Не найдены настройки Supabase в config.js.</div>
+<label>Электронная почта</label>
+<input id="email" type="email" placeholder="name@example.com">
+<label>Пароль</label>
+<input id="password" type="password" placeholder="Пароль">
+<div class="actions"><button id="loginBtn">Войти</button></div>
+<p class="muted">Если аккаунт ещё не создан, попросите администратора добавить вас в список студентов.</p>
+<div id="authMsg" class="status hidden"></div>
+</section>
+
+<section id="app" class="hidden">
+<div class="panel topline">
+<div><strong id="userName">Пользователь</strong><div class="muted" id="userMeta"></div></div>
+<button class="secondary" id="logoutBtn">Выйти</button>
+</div>
+<nav class="tabs" id="tabs">
+<button class="active" data-tab="news">Объявления</button>
+<button data-tab="schedule">Расписание</button>
+<button data-tab="chat">Чат</button>
+<button data-tab="attendance">Посещаемость</button>
+<button data-tab="report">Отчёт</button>
+<button data-tab="materials">Материалы</button>
+<button data-tab="video">Видеовстреча</button>
+<button data-tab="admin" id="adminTab" class="hidden">Админ</button>
+</nav>
+
+<section id="news" class="panel"><h2>Объявления</h2><div id="newsList">Загрузка...</div></section>
+<section id="schedule" class="panel hidden"><h2>Расписание</h2><div id="lessonList">Загрузка...</div></section>
+<section id="chat" class="panel hidden">
+<h2>Групповой чат</h2>
+<div id="chatList"></div>
+<label>Сообщение</label>
+<textarea id="chatText" placeholder="Напишите сообщение..."></textarea>
+<div class="actions"><button id="sendChat">Отправить</button></div>
+</section>
+<section id="attendance" class="panel hidden"><h2>Посещаемость</h2><div id="attendanceList"></div></section>
+<section id="report" class="panel hidden"><h2>Отчёт за неделю</h2><div id="reportContent">Загрузка...</div></section>
+<section id="materials" class="panel hidden">
+<h2>Учебные материалы</h2>
+<div id="uploadBox" class="card hidden">
+<h3>Добавить материал</h3>
+<label>Название</label><input id="matTitle">
+<label>Описание</label><textarea id="matDesc"></textarea>
+<label>Файл (до 20 МБ)</label><input id="matFile" type="file">
+<div class="actions"><button id="uploadMat">Загрузить</button></div>
+</div>
+<div id="materialsList">Загрузка...</div>
+</section>
+<section id="video" class="panel hidden">
+<h2>Видеовстреча</h2>
+<p class="muted">Видеовстречи открываются через Jitsi.</p>
+<div id="videoAdmin" class="card hidden">
+<h3>Создать комнату</h3>
+<div class="actions"><button id="createRoom">Создать комнату</button></div>
+<div id="roomCreated"></div>
+</div>
+<label>Код комнаты</label><input id="roomCode" placeholder="Введите код комнаты">
+<div class="actions"><button id="joinRoom">Присоединиться</button></div>
+</section>
+<section id="admin" class="panel hidden">
+<h2>Панель администратора</h2>
+<div class="card">
+<h3>Добавить студента</h3>
+<label>ФИО</label><input id="newName">
+<label>Email</label><input id="newEmail" type="email">
+<label>Временный пароль (не менее 8 символов)</label><input id="newPassword" type="password">
+<label>Группа</label>
+<select id="newSubgroup"><option>1 группа</option><option>2 группа</option></select>
+<div class="actions"><button id="createStudent">Создать аккаунт</button></div>
+<div id="createStudentMsg"></div>
+</div>
+<div class="card">
+<h3>Новое объявление</h3>
+<textarea id="newAnnouncement"></textarea>
+<div class="actions"><button id="publishAnnouncement">Опубликовать</button></div>
+</div>
+<div class="card">
+<h3>Добавить занятие</h3>
+<label>Название</label><input id="lessonTitle">
+<label>Дата и время</label><input id="lessonDate" type="datetime-local">
+<label>Группа</label>
+<select id="lessonGroup"><option>Все группы</option><option>1 группа</option><option>2 группа</option></select>
+<div class="actions"><button id="addLesson">Добавить в расписание</button></div>
+</div>
+<div class="card">
+<h3>Отметить посещаемость</h3>
+<label>Студент</label><select id="attendanceStudent"></select>
+<label>Дата</label><input id="attendanceDate" type="date">
+<label>Занятие</label><input id="attendanceTitle">
+<label>Статус</label>
+<select id="attendanceStatus">
+<option value="present">Присутствовал</option>
+<option value="absent">Отсутствовал</option>
+<option value="late">Опоздал</option>
+</select>
+<div class="actions"><button id="markAttendance">Сохранить отметку</button></div>
+</div>
+<div class="card"><h3>Список студентов</h3><div id="studentList">Загрузка...</div></div>
+</section>
+<div id="appMsg" class="status hidden"></div>
+</section>
+</main>
