@@ -1,5 +1,4 @@
-// Публичные настройки Supabase. Publishable key предназначен для использования в браузере.
-window.STOMAT_CONFIG = {
+window.SUPABASE_CONFIG = {
   url: "https://wqjtupggozowksbyayii.supabase.co",
-  anonKey: "Publishable_key"
+  anonKey: "sb_publishable_arazbayewhemra"
 };
