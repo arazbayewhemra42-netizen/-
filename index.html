@@ -8,6 +8,7 @@
 <title>Стомат Туркменистан</title>
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="icon" href="./icon.svg" type="image/svg+xml">
+
 <style>
 :root{font-family:system-ui,sans-serif;color:#172536;background:#f3f6fa}
 *{box-sizing:border-box}
@@ -23,7 +24,8 @@ label{display:block;font-size:13px;font-weight:600;margin:10px 0 5px}
 input,textarea,select,button{font:inherit}
 input,textarea,select{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:9px;background:white}
 textarea{min-height:80px}
-button{border:0;border-radius:9px;padding:11px 14px;background:#145b8c;color:white;font-weight:600}
+button{border:0;border-radius:9px;padding:11px 14px;background:#145b8c;color:white;font-weight:600;cursor:pointer}
+button:disabled{opacity:.55;cursor:not-allowed}
 button.secondary{background:#e8f0f7;color:#145b8c}
 button.danger{background:#b42318}
 .actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
@@ -32,24 +34,28 @@ button.danger{background:#b42318}
 .tabs button.active{background:#0b3f65}
 .hidden{display:none!important}
 .muted{color:#64748b;font-size:13px}
-.item{padding:11px 0;border-bottom:1px solid #edf1f5}
+.item{padding:11px 0;border-bottom:1px solid #edf1f5;overflow-wrap:anywhere}
 .tag{display:inline-block;background:#e8f0f7;color:#145b8c;padding:3px 8px;border-radius:20px;font-size:12px}
-.status{padding:10px;border-radius:9px;background:#eff6ff;color:#1e40af;margin:10px 0;font-size:13px}
+.status{padding:10px;border-radius:9px;background:#eff6ff;color:#1e40af;margin:10px 0;font-size:13px;overflow-wrap:anywhere}
 .error{background:#fef2f2;color:#991b1b}
 .success{background:#ecfdf3;color:#166534}
 .topline{display:flex;justify-content:space-between;gap:10px;align-items:center}
 a{color:#145b8c}
 </style>
 </head>
+
 <body>
 <header>
 <h1>Стомат Туркменистан</h1>
 <p>Стома 3 семестр · учебная группа</p>
 </header>
+
 <main>
 <section id="auth" class="panel">
 <h2>Вход в систему</h2>
-<div id="configWarning" class="status error hidden">Не найдены настройки Supabase в config.js.</div>
+<div id="configWarning" class="status error hidden">
+Не найдены настройки Supabase. Проверьте config.js.
+</div>
 <label>Электронная почта</label>
 <input id="email" type="email" placeholder="name@example.com">
 <label>Пароль</label>
@@ -60,10 +66,15 @@ a{color:#145b8c}
 </section>
 
 <section id="app" class="hidden">
+
 <div class="panel topline">
-<div><strong id="userName">Пользователь</strong><div class="muted" id="userMeta"></div></div>
+<div>
+<strong id="userName">Пользователь</strong>
+<div class="muted" id="userMeta"></div>
+</div>
 <button class="secondary" id="logoutBtn">Выйти</button>
 </div>
+
 <nav class="tabs" id="tabs">
 <button class="active" data-tab="news">Объявления</button>
 <button data-tab="schedule">Расписание</button>
@@ -75,8 +86,16 @@ a{color:#145b8c}
 <button data-tab="admin" id="adminTab" class="hidden">Админ</button>
 </nav>
 
-<section id="news" class="panel"><h2>Объявления</h2><div id="newsList">Загрузка...</div></section>
-<section id="schedule" class="panel hidden"><h2>Расписание</h2><div id="lessonList">Загрузка...</div></section>
+<section id="news" class="panel">
+<h2>Объявления</h2>
+<div id="newsList">Загрузка...</div>
+</section>
+
+<section id="schedule" class="panel hidden">
+<h2>Расписание</h2>
+<div id="lessonList">Загрузка...</div>
+</section>
+
 <section id="chat" class="panel hidden">
 <h2>Групповой чат</h2>
 <div id="chatList"></div>
@@ -84,19 +103,32 @@ a{color:#145b8c}
 <textarea id="chatText" placeholder="Напишите сообщение..."></textarea>
 <div class="actions"><button id="sendChat">Отправить</button></div>
 </section>
-<section id="attendance" class="panel hidden"><h2>Посещаемость</h2><div id="attendanceList"></div></section>
-<section id="report" class="panel hidden"><h2>Отчёт за неделю</h2><div id="reportContent">Загрузка...</div></section>
+
+<section id="attendance" class="panel hidden">
+<h2>Посещаемость</h2>
+<div id="attendanceList"></div>
+</section>
+
+<section id="report" class="panel hidden">
+<h2>Отчёт за неделю</h2>
+<div id="reportContent">Загрузка...</div>
+</section>
+
 <section id="materials" class="panel hidden">
 <h2>Учебные материалы</h2>
 <div id="uploadBox" class="card hidden">
 <h3>Добавить материал</h3>
-<label>Название</label><input id="matTitle">
-<label>Описание</label><textarea id="matDesc"></textarea>
-<label>Файл (до 20 МБ)</label><input id="matFile" type="file">
+<label>Название</label>
+<input id="matTitle">
+<label>Описание</label>
+<textarea id="matDesc"></textarea>
+<label>Файл (до 20 МБ)</label>
+<input id="matFile" type="file">
 <div class="actions"><button id="uploadMat">Загрузить</button></div>
 </div>
 <div id="materialsList">Загрузка...</div>
 </section>
+
 <section id="video" class="panel hidden">
 <h2>Видеовстреча</h2>
 <p class="muted">Видеовстречи открываются через Jitsi.</p>
@@ -105,39 +137,60 @@ a{color:#145b8c}
 <div class="actions"><button id="createRoom">Создать комнату</button></div>
 <div id="roomCreated"></div>
 </div>
-<label>Код комнаты</label><input id="roomCode" placeholder="Введите код комнаты">
+<label>Код комнаты</label>
+<input id="roomCode" placeholder="Введите код комнаты">
 <div class="actions"><button id="joinRoom">Присоединиться</button></div>
 </section>
+
 <section id="admin" class="panel hidden">
 <h2>Панель администратора</h2>
+
 <div class="card">
 <h3>Добавить студента</h3>
-<label>ФИО</label><input id="newName">
-<label>Email</label><input id="newEmail" type="email">
-<label>Временный пароль (не менее 8 символов)</label><input id="newPassword" type="password">
+<label>ФИО</label>
+<input id="newName">
+<label>Email</label>
+<input id="newEmail" type="email">
+<label>Временный пароль (не менее 8 символов)</label>
+<input id="newPassword" type="password">
 <label>Группа</label>
-<select id="newSubgroup"><option>1 группа</option><option>2 группа</option></select>
+<select id="newSubgroup">
+<option>1 группа</option>
+<option>2 группа</option>
+</select>
 <div class="actions"><button id="createStudent">Создать аккаунт</button></div>
-<div id="createStudentMsg"></div>
+<div id="createStudentMsg" class="status hidden"></div>
 </div>
+
 <div class="card">
 <h3>Новое объявление</h3>
-<textarea id="newAnnouncement"></textarea>
+<textarea id="newAnnouncement" placeholder="Текст объявления"></textarea>
 <div class="actions"><button id="publishAnnouncement">Опубликовать</button></div>
 </div>
+
 <div class="card">
 <h3>Добавить занятие</h3>
-<label>Название</label><input id="lessonTitle">
-<label>Дата и время</label><input id="lessonDate" type="datetime-local">
+<label>Название</label>
+<input id="lessonTitle">
+<label>Дата и время</label>
+<input id="lessonDate" type="datetime-local">
 <label>Группа</label>
-<select id="lessonGroup"><option>Все группы</option><option>1 группа</option><option>2 группа</option></select>
+<select id="lessonGroup">
+<option>Все группы</option>
+<option>1 группа</option>
+<option>2 группа</option>
+</select>
 <div class="actions"><button id="addLesson">Добавить в расписание</button></div>
 </div>
+
 <div class="card">
 <h3>Отметить посещаемость</h3>
-<label>Студент</label><select id="attendanceStudent"></select>
-<label>Дата</label><input id="attendanceDate" type="date">
-<label>Занятие</label><input id="attendanceTitle">
+<label>Студент</label>
+<select id="attendanceStudent"></select>
+<label>Дата</label>
+<input id="attendanceDate" type="date">
+<label>Занятие</label>
+<input id="attendanceTitle">
 <label>Статус</label>
 <select id="attendanceStatus">
 <option value="present">Присутствовал</option>
@@ -146,325 +199,459 @@ a{color:#145b8c}
 </select>
 <div class="actions"><button id="markAttendance">Сохранить отметку</button></div>
 </div>
-<div class="card"><h3>Список студентов</h3><div id="studentList">Загрузка...</div></div>
+
+<div class="card">
+<h3>Список студентов</h3>
+<div id="studentList">Загрузка...</div>
+</div>
 </section>
+
 <div id="appMsg" class="status hidden"></div>
 </section>
 </main>
+
 <script src="./config.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <script>
 (() => {
-  const cfg = window.SUPABASE_CONFIG || window.supabaseConfig || {};
-  const url = window.SUPABASE_URL || cfg.url || cfg.supabaseUrl;
-  const key = window.SUPABASE_ANON_KEY || cfg.anonKey || cfg.key || cfg.supabaseKey;
+'use strict';
 
-  const $ = id => document.getElementById(id);
-  let db, currentUser, profile, studentsCache = [];
+const cfg = window.SUPABASE_CONFIG || window.supabaseConfig || {};
+const url = window.SUPABASE_URL || cfg.url || cfg.supabaseUrl;
+const key = window.SUPABASE_ANON_KEY || cfg.anonKey || cfg.key || cfg.supabaseKey;
 
-  const showMsg = (id, text, error=false) => {
-    const el = $(id);
-    el.textContent = text;
-    el.className = 'status ' + (error ? 'error' : 'success');
-    el.classList.remove('hidden');
-  };
+const $ = id => document.getElementById(id);
 
-  const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({
-    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-  }[c]));
+let db = null;
+let currentUser = null;
+let profile = null;
+let studentsCache = [];
 
-  const dateText = s => s ? new Date(s).toLocaleString('ru-RU') : '';
-  const isAdmin = () => profile?.role === 'admin';
+const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({
+  '&':'&amp;',
+  '<':'&lt;',
+  '>':'&gt;',
+  '"':'&quot;',
+  "'":'&#39;'
+}[c]));
 
-  if (!url || !key || !window.supabase) {
-    $('configWarning').classList.remove('hidden');
-  } else {
-    db = window.supabase.createClient(url, key);
+const dateText = value => {
+  if (!value) return '';
+  const d = new Date(value);
+  return Number.isNaN(d.getTime()) ? esc(value) : d.toLocaleString('ru-RU');
+};
+
+const isAdmin = () => profile?.role === 'admin';
+
+function showMsg(id, message, error = false) {
+  const el = $(id);
+  if (!el) return;
+  el.textContent = message;
+  el.className = 'status ' + (error ? 'error' : 'success');
+  el.classList.remove('hidden');
+}
+
+function showError(message) {
+  showMsg('appMsg', message, true);
+}
+
+function setBusy(id, busy) {
+  const el = $(id);
+  if (el) el.disabled = busy;
+}
+
+if (!url || !key || !window.supabase) {
+  $('configWarning').classList.remove('hidden');
+} else {
+  db = window.supabase.createClient(url, key);
+}
+
+function showTab(name) {
+  const allowed = ['news','schedule','chat','attendance','report','materials','video','admin'];
+  if (!allowed.includes(name)) return;
+  if (name === 'admin' && !isAdmin()) return;
+
+  document.querySelectorAll('#tabs [data-tab]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.tab === name);
+  });
+
+  allowed.forEach(id => {
+    const panel = $(id);
+    if (panel) panel.classList.toggle('hidden', id !== name);
+  });
+}
+
+async function loadProfile(user) {
+  if (!db) throw new Error('Нет подключения к Supabase.');
+
+  const { data, error } = await db.from('profiles')
+    .select('id,email,full_name,role,subgroup,active')
+    .eq('id', user.id)
+    .single();
+
+  if (error) throw error;
+
+  if (data.active === false) {
+    await db.auth.signOut();
+    throw new Error('Аккаунт отключён. Обратитесь к администратору.');
   }
 
-  async function loadProfile(user) {
-    const {data,error} = await db.from('profiles')
-      .select('id,email,full_name,role,subgroup,active')
-      .eq('id',user.id).single();
+  profile = data;
+  currentUser = user;
 
-    if (error) throw error;
+  $('userName').textContent = data.full_name || data.email || 'Пользователь';
+  $('userMeta').textContent = (data.subgroup || '') +
+    (isAdmin() ? ' · администратор' : '');
 
-    if (data.active === false) {
-      await db.auth.signOut();
-      throw new Error('Аккаунт отключён. Обратитесь к администратору.');
-    }
+  $('adminTab').classList.toggle('hidden', !isAdmin());
+  $('uploadBox').classList.toggle('hidden', !isAdmin());
+  $('videoAdmin').classList.toggle('hidden', !isAdmin());
 
-    profile = data;
-    currentUser = user;
+  $('auth').classList.add('hidden');
+  $('app').classList.remove('hidden');
 
-    $('userName').textContent = data.full_name || data.email || 'Пользователь';
-    $('userMeta').textContent = (data.subgroup || '') +
-      (data.role === 'admin' ? ' · администратор' : '');
+  showTab('news');
+  await loadAll();
+}
 
-    $('adminTab').classList.toggle('hidden',!isAdmin());
-    $('uploadBox').classList.toggle('hidden',!isAdmin());
-    $('videoAdmin').classList.toggle('hidden',!isAdmin());
+async function loadAll() {
+  const tasks = [
+    loadAnnouncements(),
+    loadLessons(),
+    loadChat(),
+    loadAttendance(),
+    loadReport(),
+    loadMaterials()
+  ];
 
-    await loadAll();
+  await Promise.allSettled(tasks);
 
-    $('auth').classList.add('hidden');
-    $('app').classList.remove('hidden');
+  if (isAdmin()) await loadStudents();
+}
+
+async function loadAnnouncements() {
+  const { data, error } = await db.from('announcements')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(50);
+
+  if (error) {
+    $('newsList').textContent = error.message;
+    return;
   }
 
-  async function loadAll() {
-    await Promise.allSettled([
-      loadAnnouncements(), loadLessons(), loadChat(),
-      loadAttendance(), loadReport(), loadMaterials()
-    ]);
-    if (isAdmin()) await loadStudents();
-  }
-
-  async function loadAnnouncements() {
-    const {data,error} = await db.from('announcements')
-      .select('*').order('created_at',{ascending:false}).limit(50);
-
-    $('newsList').innerHTML = error ? esc(error.message) :
-      (data?.length ? data.map(x => `
-        <div class="item">
-          <strong>${esc(x.title || 'Объявление')}</strong>
-          <div>${esc(x.content || x.text || '')}</div>
-          <div class="muted">${dateText(x.created_at)}</div>
-        </div>`).join('') : 'Объявлений пока нет.');
-  }
-
-  async function loadLessons() {
-    const {data,error} = await db.from('lessons')
-      .select('*').order('lesson_date',{ascending:true}).limit(100);
-
-    $('lessonList').innerHTML = error ? esc(error.message) :
-      (data?.length ? data.map(x => `
-        <div class="item">
-          <strong>${esc(x.title || x.lesson_title || 'Занятие')}</strong>
-          <div>${dateText(x.lesson_date || x.starts_at)} · ${esc(x.subgroup || 'Все группы')}</div>
-        </div>`).join('') : 'Расписание пока пустое.');
-  }
-
-  async function loadChat() {
-    const {data,error} = await db.from('messages')
-      .select('*').order('created_at',{ascending:true}).limit(100);
-
-    $('chatList').innerHTML = error ? esc(error.message) :
-      (data?.length ? data.map(x => `
-        <div class="item">
-          <strong>${esc(x.full_name || x.sender_name || 'Участник')}</strong>
-          <div>${esc(x.content || x.message || x.text || '')}</div>
-          <div class="muted">${dateText(x.created_at)}</div>
-        </div>`).join('') : 'Сообщений пока нет.');
-  }
-
-  async function loadAttendance() {
-    let q = db.from('attendance').select('*')
-      .order('lesson_date',{ascending:false}).limit(100);
-
-    if (!isAdmin()) q = q.eq('student_id',currentUser.id);
-
-    const {data,error} = await q;
-
-    $('attendanceList').innerHTML = error ? esc(error.message) :
-      (data?.length ? data.map(x => `
-        <div class="item">
-          ${esc(x.lesson_title || 'Занятие')} · ${esc(x.lesson_date)}
-          <span class="tag">${esc(x.status)}</span>
-        </div>`).join('') : 'Записей пока нет.');
-  }
-
-  async function loadReport() {
-    const since = new Date();
-    since.setDate(since.getDate()-7);
-
-    let q = db.from('attendance').select('status,student_id,lesson_date');
-
-    if (!isAdmin()) q = q.eq('student_id',currentUser.id);
-
-    q = q.gte('lesson_date',since.toISOString().slice(0,10));
-
-    const {data,error} = await q;
-
-    if (error) {
-      $('reportContent').textContent = error.message;
-      return;
-    }
-
-    const rows = data || [];
-    const present = rows.filter(x => x.status === 'present').length;
-    const absent = rows.filter(x => x.status === 'absent').length;
-    const late = rows.filter(x => x.status === 'late').length;
-
-    $('reportContent').innerHTML =
-      `За последние 7 дней: <strong>${rows.length}</strong> отметок<br>
-      Присутствовал: <strong>${present}</strong><br>
-      Отсутствовал: <strong>${absent}</strong><br>
-      Опоздал: <strong>${late}</strong>`;
-  }
-
-  async function loadMaterials() {
-    const {data,error} = await db.from('materials')
-      .select('*').order('created_at',{ascending:false}).limit(100);
-
-    if (error) {
-      $('materialsList').textContent = error.message;
-      return;
-    }
-
-    if (!data?.length) {
-      $('materialsList').textContent = 'Материалов пока нет.';
-      return;
-    }
-
-    $('materialsList').innerHTML = data.map(x => `
+  $('newsList').innerHTML = data?.length
+    ? data.map(x => `
       <div class="item">
-        <strong>${esc(x.title)}</strong>
-        <div>${esc(x.description || '')}</div>
+        <strong>${esc(x.title || 'Объявление')}</strong>
+        <div>${esc(x.content || x.text || '')}</div>
         <div class="muted">${dateText(x.created_at)}</div>
-        <div class="actions">
-          <button class="secondary" data-open="${esc(x.id)}">Открыть файл</button>
-          ${isAdmin() ? `<button class="danger" data-delete-material="${esc(x.id)}">Удалить</button>` : ''}
-        </div>
-      </div>`).join('');
+      </div>
+    `).join('')
+    : 'Объявлений пока нет.';
+}
+
+async function loadLessons() {
+  const { data, error } = await db.from('lessons')
+    .select('*')
+    .order('lesson_date', { ascending: true })
+    .limit(100);
+
+  if (error) {
+    $('lessonList').textContent = error.message;
+    return;
   }
 
-  async function loadStudents() {
-    const {data,error} = await db.from('profiles')
-      .select('id,email,full_name,subgroup,active,role')
-      .eq('role','student').order('full_name');
+  $('lessonList').innerHTML = data?.length
+    ? data.map(x => `
+      <div class="item">
+        <strong>${esc(x.title || x.lesson_title || 'Занятие')}</strong>
+        <div>${dateText(x.lesson_date || x.starts_at)} · ${esc(x.subgroup || 'Все группы')}</div>
+      </div>
+    `).join('')
+    : 'Расписание пока пустое.';
+}
 
-    if (error) {
-      $('studentList').textContent = error.message;
-      return;
-    }
+async function loadChat() {
+  const { data, error } = await db.from('messages')
+    .select('*')
+    .order('created_at', { ascending: true })
+    .limit(100);
 
-    studentsCache = data || [];
+  if (error) {
+    $('chatList').textContent = error.message;
+    return;
+  }
 
-    $('attendanceStudent').innerHTML = studentsCache
-      .filter(x => x.active !== false)
-      .map(x => `<option value="${esc(x.id)}">
+  $('chatList').innerHTML = data?.length
+    ? data.map(x => `
+      <div class="item">
+        <strong>${esc(x.full_name || x.sender_name || 'Участник')}</strong>
+        <div>${esc(x.content || x.message || x.text || '')}</div>
+        <div class="muted">${dateText(x.created_at)}</div>
+      </div>
+    `).join('')
+    : 'Сообщений пока нет.';
+}
+
+async function loadAttendance() {
+  let query = db.from('attendance')
+    .select('*')
+    .order('lesson_date', { ascending: false })
+    .limit(100);
+
+  if (!isAdmin()) {
+    query = query.eq('student_id', currentUser.id);
+  }
+
+  const { data, error } = await query;
+
+  if (error) {
+    $('attendanceList').textContent = error.message;
+    return;
+  }
+
+  $('attendanceList').innerHTML = data?.length
+    ? data.map(x => `
+      <div class="item">
+        ${esc(x.lesson_title || 'Занятие')} · ${esc(x.lesson_date)}
+        <span class="tag">${esc(x.status)}</span>
+      </div>
+    `).join('')
+    : 'Записей пока нет.';
+}
+
+async function loadReport() {
+  const since = new Date();
+  since.setDate(since.getDate() - 7);
+
+  let query = db.from('attendance')
+    .select('status,student_id,lesson_date');
+
+  if (!isAdmin()) {
+    query = query.eq('student_id', currentUser.id);
+  }
+
+  query = query.gte('lesson_date', since.toISOString().slice(0, 10));
+
+  const { data, error } = await query;
+
+  if (error) {
+    $('reportContent').textContent = error.message;
+    return;
+  }
+
+  const rows = data || [];
+  const present = rows.filter(x => x.status === 'present').length;
+  const absent = rows.filter(x => x.status === 'absent').length;
+  const late = rows.filter(x => x.status === 'late').length;
+
+  $('reportContent').innerHTML = `
+    За последние 7 дней: <strong>${rows.length}</strong> отметок<br>
+    Присутствовал: <strong>${present}</strong><br>
+    Отсутствовал: <strong>${absent}</strong><br>
+    Опоздал: <strong>${late}</strong>
+  `;
+}
+
+async function loadMaterials() {
+  const { data, error } = await db.from('materials')
+    .select('*')
+    .order('created_at', { ascending: false })
+    .limit(100);
+
+  if (error) {
+    $('materialsList').textContent = error.message;
+    return;
+  }
+
+  if (!data?.length) {
+    $('materialsList').textContent = 'Материалов пока нет.';
+    return;
+  }
+
+  $('materialsList').innerHTML = data.map(x => `
+    <div class="item">
+      <strong>${esc(x.title)}</strong>
+      <div>${esc(x.description || '')}</div>
+      <div class="muted">${dateText(x.created_at)}</div>
+      <div class="actions">
+        <button class="secondary"
+          data-material-action="open"
+          data-path="${esc(x.file_path || '')}">
+          Открыть файл
+        </button>
+        ${isAdmin() ? `
+          <button class="danger"
+            data-material-action="delete"
+            data-path="${esc(x.file_path || '')}">
+            Удалить
+          </button>
+        ` : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+async function loadStudents() {
+  const { data, error } = await db.from('profiles')
+    .select('id,email,full_name,subgroup,active,role')
+    .eq('role', 'student')
+    .order('full_name');
+
+  if (error) {
+    $('studentList').textContent = error.message;
+    return;
+  }
+
+  studentsCache = data || [];
+
+  $('attendanceStudent').innerHTML = studentsCache
+    .filter(x => x.active !== false)
+    .map(x => `
+      <option value="${esc(x.id)}">
         ${esc(x.full_name || x.email)} — ${esc(x.subgroup || '')}
-      </option>`).join('');
+      </option>
+    `).join('');
 
-    $('studentList').innerHTML = studentsCache.map(x => `
+  $('studentList').innerHTML = studentsCache.length
+    ? studentsCache.map(x => `
       <div class="item">
         <strong>${esc(x.full_name || 'Без имени')}</strong> · ${esc(x.subgroup || '')}
-        <div class="muted">${esc(x.email || '')} · ${x.active === false ? 'Отключён' : 'Активен'}</div>
+        <div class="muted">
+          ${esc(x.email || '')} · ${x.active === false ? 'Отключён' : 'Активен'}
+        </div>
         <div class="actions">
-          <button class="secondary" data-edit-student="${esc(x.id)}">Изменить</button>
+          <button class="secondary"
+            data-student-action="edit"
+            data-id="${esc(x.id)}">Изменить</button>
           <button class="${x.active === false ? 'secondary' : 'danger'}"
-            data-toggle-student="${esc(x.id)}">
+            data-student-action="toggle"
+            data-id="${esc(x.id)}">
             ${x.active === false ? 'Включить' : 'Отключить'}
           </button>
         </div>
-      </div>`).join('') || 'Студентов пока нет.';
+      </div>
+    `).join('')
+    : 'Студентов пока нет.';
+}
+
+// Вход
+$('loginBtn').addEventListener('click', async () => {
+  if (!db) {
+    showMsg('authMsg', 'Проверьте настройки config.js и загрузку Supabase.', true);
+    return;
   }
-  // Вход в аккаунт
-  $('loginBtn')?.addEventListener('click', async () => {
-    const email = $('email')?.value.trim();
-    const password = $('password')?.value;
 
-    if (!email || !password) {
-      showMsg('authMsg', 'Введите почту и пароль.', true);
-      return;
-    }
+  const email = $('email').value.trim();
+  const password = $('password').value;
 
-    $('loginBtn').disabled = true;
-    try {
-      const { data, error } = await db.auth.signInWithPassword({ email, password });
-      if (error) throw error;
-      await loadProfile(data.user);
-    } catch (e) {
-      showMsg('authMsg', e.message, true);
-    } finally {
-      $('loginBtn').disabled = false;
-    }
-  });
+  if (!email || !password) {
+    showMsg('authMsg', 'Введите почту и пароль.', true);
+    return;
+  }
 
-  // Выход
-  $('logoutBtn')?.addEventListener('click', async () => {
-    await db.auth.signOut();
-    location.reload();
-  });
+  setBusy('loginBtn', true);
 
-  // Переключение разделов
-  $('tabs')?.addEventListener('click', e => {
-    const btn = e.target.closest('[data-tab]');
-    if (!btn) return;
+  try {
+    const { data, error } = await db.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    await loadProfile(data.user);
+  } catch (e) {
+    showMsg('authMsg', e.message, true);
+  } finally {
+    setBusy('loginBtn', false);
+  }
+});
 
-    document.querySelectorAll('[data-tab]').forEach(x =>
-      x.classList.toggle('active', x === btn)
-    );
+// Выход
+$('logoutBtn').addEventListener('click', async () => {
+  if (!db) return;
+  await db.auth.signOut();
+  location.reload();
+});
 
-    document.querySelectorAll('.panel').forEach(x =>
-      x.classList.add('hidden')
-    );
+// Разделы
+$('tabs').addEventListener('click', e => {
+  const btn = e.target.closest('[data-tab]');
+  if (!btn) return;
+  showTab(btn.dataset.tab);
+});
 
-    $(btn.dataset.tab)?.classList.remove('hidden');
-  });
+// Чат
+$('sendChat').addEventListener('click', async () => {
+  if (!currentUser) return;
 
-  // Отправка сообщения в чат
-  $('sendMessageBtn')?.addEventListener('click', async () => {
-    const input = $('messageInput');
-    const content = input?.value.trim();
-    if (!content) return;
+  const content = $('chatText').value.trim();
+  if (!content) return;
 
+  setBusy('sendChat', true);
+
+  try {
     const { error } = await db.from('messages').insert({
       user_id: currentUser.id,
       content
     });
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
+    if (error) throw error;
 
-    input.value = '';
+    $('chatText').value = '';
     await loadChat();
-  });
+  } catch (e) {
+    showError(e.message);
+  } finally {
+    setBusy('sendChat', false);
+  }
+});
 
-  // Публикация объявления
-  $('publishAnnouncementBtn')?.addEventListener('click', async () => {
-    if (!isAdmin()) return;
+// Объявление
+$('publishAnnouncement').addEventListener('click', async () => {
+  if (!isAdmin()) return;
 
-    const title = $('announcementTitle')?.value.trim();
-    const content = $('announcementText')?.value.trim();
+  const content = $('newAnnouncement').value.trim();
+  if (!content) {
+    showError('Введите текст объявления.');
+    return;
+  }
 
-    if (!title || !content) {
-      alert('Заполните заголовок и текст объявления.');
-      return;
-    }
+  setBusy('publishAnnouncement', true);
 
+  try {
     const { error } = await db.from('announcements').insert({
-      title,
+      title: 'Объявление',
       content,
       created_by: currentUser.id
     });
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
+    if (error) throw error;
 
-    $('announcementTitle').value = '';
-    $('announcementText').value = '';
+    $('newAnnouncement').value = '';
     await loadAnnouncements();
-    alert('Объявление опубликовано.');
-  });
+    showMsg('appMsg', 'Объявление опубликовано.');
+  } catch (e) {
+    showError(e.message);
+  } finally {
+    setBusy('publishAnnouncement', false);
+  }
+});
 
-  // Добавление занятия
-  $('addLessonBtn')?.addEventListener('click', async () => {
-    if (!isAdmin()) return;
+// Добавление занятия
+$('addLesson').addEventListener('click', async () => {
+  if (!isAdmin()) return;
 
-    const title = $('lessonTitle')?.value.trim();
-    const lesson_date = $('lessonDate')?.value;
-    const subgroup = $('lessonGroup')?.value || 'Все группы';
+  const title = $('lessonTitle').value.trim();
+  const lesson_date = $('lessonDate').value;
+  const subgroup = $('lessonGroup').value;
 
-    if (!title || !lesson_date) {
-      alert('Укажите название и дату занятия.');
-      return;
-    }
+  if (!title || !lesson_date) {
+    showError('Укажите название и дату занятия.');
+    return;
+  }
 
+  setBusy('addLesson', true);
+
+  try {
     const { error } = await db.from('lessons').insert({
       title,
       lesson_date,
@@ -472,33 +659,39 @@ a{color:#145b8c}
       created_by: currentUser.id
     });
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
+    if (error) throw error;
 
     $('lessonTitle').value = '';
+    $('lessonDate').value = '';
     await loadLessons();
-    alert('Занятие добавлено.');
-  });
+    showMsg('appMsg', 'Занятие добавлено.');
+  } catch (e) {
+    showError(e.message);
+  } finally {
+    setBusy('addLesson', false);
+  }
+});
 
-  // Отметка посещаемости
-  $('saveAttendanceBtn')?.addEventListener('click', async () => {
-    if (!isAdmin()) return;
+// Посещаемость
+$('markAttendance').addEventListener('click', async () => {
+  if (!isAdmin()) return;
 
-    const student_id = $('attendanceStudent')?.value;
-    const lesson_date = $('attendanceDate')?.value;
-    const lesson_title = $('attendanceLesson')?.value.trim();
-    const status = $('attendanceStatus')?.value || 'Присутствовал';
+  const student_id = $('attendanceStudent').value;
+  const lesson_date = $('attendanceDate').value;
+  const lesson_title = $('attendanceTitle').value.trim();
+  const status = $('attendanceStatus').value;
 
-    if (!student_id || !lesson_date || !lesson_title) {
-      alert('Заполните все поля посещаемости.');
-      return;
-    }
+  if (!student_id || !lesson_date || !lesson_title) {
+    showError('Заполните все поля посещаемости.');
+    return;
+  }
 
-    const student = studentsCache.find(s => s.id === student_id);
+  const student = studentsCache.find(x => x.id === student_id);
 
-    const { error } = await db.from('attendance').upsert({
+  setBusy('markAttendance', true);
+
+  try {
+    const { error } = await db.from('attendance').insert({
       student_id,
       lesson_date,
       lesson_title,
@@ -507,123 +700,130 @@ a{color:#145b8c}
       marked_by: currentUser.id
     });
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
+    if (error) throw error;
 
+    $('attendanceTitle').value = '';
     await loadAttendance();
     await loadReport();
-    alert('Посещаемость сохранена.');
-  });
+    showMsg('appMsg', 'Посещаемость сохранена.');
+  } catch (e) {
+    showError(e.message);
+  } finally {
+    setBusy('markAttendance', false);
+  }
+});
 
-  // Создание аккаунта студента
-  $('createStudentBtn')?.addEventListener('click', async () => {
-    if (!isAdmin()) return;
+// Создание аккаунта студента
+$('createStudent').addEventListener('click', async () => {
+  if (!isAdmin()) return;
 
-    const full_name = $('studentName')?.value.trim();
-    const email = $('studentEmail')?.value.trim();
-    const password = $('studentPassword')?.value;
-    const subgroup = $('studentGroup')?.value || '1 группа';
+  const full_name = $('newName').value.trim();
+  const email = $('newEmail').value.trim();
+  const password = $('newPassword').value;
+  const subgroup = $('newSubgroup').value;
 
-    if (!full_name || !email || !password) {
-      alert('Заполните ФИО, почту и пароль.');
-      return;
-    }
+  if (!full_name || !email || !password) {
+    showMsg('createStudentMsg', 'Заполните ФИО, почту и пароль.', true);
+    return;
+  }
 
-    if (password.length < 8) {
-      alert('Пароль должен содержать не менее 8 символов.');
-      return;
-    }
+  if (password.length < 8) {
+    showMsg('createStudentMsg', 'Пароль должен содержать не менее 8 символов.', true);
+    return;
+  }
 
-    const { data, error } = await db.functions.invoke(
-      'admin-create-student',
-      { body: { full_name, email, password, subgroup } }
-    );
+  setBusy('createStudent', true);
 
-    if (error) {
-      alert(error.message);
-      return;
-    }
+  try {
+    const { error } = await db.functions.invoke('admin-create-student', {
+      body: { full_name, email, password, subgroup }
+    });
 
-    $('studentName').value = '';
-    $('studentEmail').value = '';
-    $('studentPassword').value = '';
+    if (error) throw error;
+
+    $('newName').value = '';
+    $('newEmail').value = '';
+    $('newPassword').value = '';
 
     await loadStudents();
-    alert('Аккаунт студента создан.');
-  });
+    showMsg('createStudentMsg', 'Аккаунт студента создан.');
+  } catch (e) {
+    showMsg('createStudentMsg', e.message, true);
+  } finally {
+    setBusy('createStudent', false);
+  }
+});
 
-  // Изменение или отключение студента
-  $('studentsList')?.addEventListener('click', async e => {
-    if (!isAdmin()) return;
+// Изменение и включение/отключение студента
+$('studentList').addEventListener('click', async e => {
+  if (!isAdmin()) return;
 
-    const btn = e.target.closest('[data-student-action]');
-    if (!btn) return;
+  const btn = e.target.closest('[data-student-action]');
+  if (!btn) return;
 
-    const id = btn.dataset.id;
-    const student = studentsCache.find(s => s.id === id);
-    if (!student) return;
+  const id = btn.dataset.id;
+  const student = studentsCache.find(x => x.id === id);
+  if (!student) return;
 
-    if (btn.dataset.studentAction === 'deactivate') {
-      if (!confirm('Отключить аккаунт этого студента?')) return;
-
-      const { error } = await db.from('profiles')
-        .update({ active: false }).eq('id', id);
-
-      if (error) {
-        alert(error.message);
-        return;
-      }
-
-      await loadStudents();
-      alert('Аккаунт отключён.');
-    }
-
+  try {
     if (btn.dataset.studentAction === 'edit') {
       const name = prompt('Введите новое ФИО:', student.full_name || '');
       if (name === null || !name.trim()) return;
 
       const { error } = await db.from('profiles')
-        .update({ full_name: name.trim() }).eq('id', id);
+        .update({ full_name: name.trim() })
+        .eq('id', id);
 
-      if (error) {
-        alert(error.message);
-        return;
-      }
-
-      await loadStudents();
-      alert('Данные обновлены.');
-    }
-  });
-
-  // Загрузка учебного материала
-  $('uploadMaterialBtn')?.addEventListener('click', async () => {
-    if (!isAdmin()) return;
-
-    const file = $('materialFile')?.files?.[0];
-    const title = $('materialTitle')?.value.trim();
-    const description = $('materialDescription')?.value.trim();
-
-    if (!file || !title) {
-      alert('Выберите файл и укажите название.');
-      return;
+      if (error) throw error;
     }
 
-    if (file.size > 20 * 1024 * 1024) {
-      alert('Размер файла не должен превышать 20 МБ.');
-      return;
+    if (btn.dataset.studentAction === 'toggle') {
+      const nextActive = student.active === false;
+
+      if (!confirm(nextActive
+        ? 'Включить аккаунт этого студента?'
+        : 'Отключить аккаунт этого студента?')) return;
+
+      const { error } = await db.from('profiles')
+        .update({ active: nextActive })
+        .eq('id', id);
+
+      if (error) throw error;
     }
 
-    const path = `${Date.now()}_${file.name}`;
+    await loadStudents();
+    showMsg('appMsg', 'Данные студента обновлены.');
+  } catch (e) {
+    showError(e.message);
+  }
+});
 
-    const upload = await db.storage.from('materials')
-      .upload(path, file);
+// Загрузка учебного материала
+$('uploadMat').addEventListener('click', async () => {
+  if (!isAdmin()) return;
 
-    if (upload.error) {
-      alert(upload.error.message);
-      return;
-    }
+  const file = $('matFile').files?.[0];
+  const title = $('matTitle').value.trim();
+  const description = $('matDesc').value.trim();
+
+  if (!file || !title) {
+    showError('Выберите файл и укажите название.');
+    return;
+  }
+
+  if (file.size > 20 * 1024 * 1024) {
+    showError('Размер файла не должен превышать 20 МБ.');
+    return;
+  }
+
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+  const path = `${Date.now()}_${safeName}`;
+
+  setBusy('uploadMat', true);
+
+  try {
+    const upload = await db.storage.from('materials').upload(path, file);
+    if (upload.error) throw upload.error;
 
     const { error } = await db.from('materials').insert({
       title,
@@ -634,91 +834,115 @@ a{color:#145b8c}
     });
 
     if (error) {
-      alert(error.message);
-      return;
+      await db.storage.from('materials').remove([path]);
+      throw error;
     }
 
-    $('materialFile').value = '';
-    $('materialTitle').value = '';
-    $('materialDescription').value = '';
+    $('matFile').value = '';
+    $('matTitle').value = '';
+    $('matDesc').value = '';
 
     await loadMaterials();
-    alert('Материал загружен.');
-  });
+    showMsg('appMsg', 'Материал загружен.');
+  } catch (e) {
+    showError(e.message);
+  } finally {
+    setBusy('uploadMat', false);
+  }
+});
 
-  // Открытие и удаление материалов
-  $('materialsList')?.addEventListener('click', async e => {
-    const btn = e.target.closest('[data-material-action]');
-    if (!btn) return;
+// Открытие и удаление материалов
+$('materialsList').addEventListener('click', async e => {
+  const btn = e.target.closest('[data-material-action]');
+  if (!btn) return;
 
-    const path = btn.dataset.path;
+  const path = btn.dataset.path;
+  if (!path) return;
 
+  try {
     if (btn.dataset.materialAction === 'open') {
       const { data, error } = await db.storage
-        .from('materials').createSignedUrl(path, 60);
+        .from('materials')
+        .createSignedUrl(path, 60);
 
-      if (error) {
-        alert(error.message);
-        return;
-      }
+      if (error) throw error;
 
-      window.open(data.signedUrl, '_blank');
+      window.open(data.signedUrl, '_blank', 'noopener');
     }
 
     if (btn.dataset.materialAction === 'delete' && isAdmin()) {
       if (!confirm('Удалить этот материал?')) return;
 
       const fileResult = await db.storage.from('materials').remove([path]);
-      if (fileResult.error) {
-        alert(fileResult.error.message);
-        return;
-      }
+      if (fileResult.error) throw fileResult.error;
 
       const { error } = await db.from('materials')
-        .delete().eq('file_path', path);
+        .delete()
+        .eq('file_path', path);
 
-      if (error) {
-        alert(error.message);
-        return;
-      }
-
-      await loadMaterials();
-    }
-  });
-
-  // Видеовстреча
-  $('joinVideoBtn')?.addEventListener('click', () => {
-    const room = $('videoRoom')?.value.trim() ||
-      'stomat-turkmenistan-group';
-
-    const safeRoom = room.replace(/[^a-zA-Z0-9_-]/g, '');
-    if (!safeRoom) return;
-
-    window.open(
-      'https://meet.jit.si/' + encodeURIComponent(safeRoom),
-      '_blank'
-    );
-  });
-
-  // Восстановление сессии после перезагрузки
-  async function restoreSession() {
-    if (!db) return;
-
-    try {
-      const { data, error } = await db.auth.getSession();
       if (error) throw error;
 
-      if (data.session?.user) {
-        await loadProfile(data.session.user);
-      }
-    } catch (e) {
-      console.error('Ошибка восстановления сессии:', e.message);
+      await loadMaterials();
+      showMsg('appMsg', 'Материал удалён.');
     }
+  } catch (e) {
+    showError(e.message);
+  }
+});
+
+// Создание видеокомнаты
+$('createRoom').addEventListener('click', () => {
+  if (!isAdmin()) return;
+
+  const room = 'stomat-turkmenistan-' +
+    Math.random().toString(36).slice(2, 10);
+
+  $('roomCode').value = room;
+  $('roomCreated').innerHTML =
+    '<p class="status success">Комната создана. Передайте код группе.</p>';
+});
+
+// Подключение к видеовстрече
+$('joinRoom').addEventListener('click', () => {
+  const room = $('roomCode').value.trim();
+
+  if (!room) {
+    showError('Введите код комнаты.');
+    return;
   }
 
-  restoreSession();
+  const safeRoom = room.replace(/[^a-zA-Z0-9_-]/g, '');
+  if (!safeRoom) {
+    showError('Неверный код комнаты.');
+    return;
+  }
+
+  window.open(
+    'https://meet.jit.si/' + encodeURIComponent(safeRoom),
+    '_blank',
+    'noopener'
+  );
+});
+
+// Восстановление сессии
+async function restoreSession() {
+  if (!db) return;
+
+  try {
+    const { data, error } = await db.auth.getSession();
+    if (error) throw error;
+
+    if (data.session?.user) {
+      await loadProfile(data.session.user);
+    }
+  } catch (e) {
+    showMsg('authMsg', e.message, true);
+  }
+}
+
+restoreSession();
 
 })();
-<script src="./config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
+</script>
+</body>
+</html>
