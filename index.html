@@ -41,6 +41,7 @@ button.danger{background:#b42318}
 .success{background:#ecfdf3;color:#166534}
 .topline{display:flex;justify-content:space-between;gap:10px;align-items:center}
 a{color:#145b8c}
+.codebox{font-size:20px;font-weight:800;letter-spacing:2px;word-break:break-all;background:#eff6ff;padding:12px;border-radius:9px}
 </style>
 </head>
 
@@ -53,20 +54,38 @@ a{color:#145b8c}
 <main>
 <section id="auth" class="panel">
 <h2>Вход в систему</h2>
+
 <div id="configWarning" class="status error hidden">
 Не найдены настройки Supabase. Проверьте config.js.
 </div>
+
+<div class="card">
+<h3>Вход для студентов</h3>
+<label>ФИО</label>
+<input id="studentName" autocomplete="name" placeholder="Введите ФИО полностью">
+<label>Личный код</label>
+<input id="studentCode" autocomplete="off" placeholder="Введите личный код">
+<div class="actions">
+<button id="studentLoginBtn">Войти как студент</button>
+</div>
+</div>
+
+<div class="card">
+<h3>Вход администратора</h3>
 <label>Электронная почта</label>
 <input id="email" type="email" placeholder="name@example.com">
 <label>Пароль</label>
 <input id="password" type="password" placeholder="Пароль">
-<div class="actions"><button id="loginBtn">Войти</button></div>
-<p class="muted">Если аккаунт ещё не создан, попросите администратора добавить вас в список студентов.</p>
+<div class="actions">
+<button id="loginBtn">Войти как администратор</button>
+</div>
+</div>
+
+<p class="muted">Если у вас нет личного кода, обратитесь к администратору.</p>
 <div id="authMsg" class="status hidden"></div>
 </section>
 
 <section id="app" class="hidden">
-
 <div class="panel topline">
 <div>
 <strong id="userName">Пользователь</strong>
@@ -148,18 +167,30 @@ a{color:#145b8c}
 <div class="card">
 <h3>Добавить студента</h3>
 <label>ФИО</label>
-<input id="newName">
-<label>Email</label>
-<input id="newEmail" type="email">
-<label>Временный пароль (не менее 8 символов)</label>
-<input id="newPassword" type="password">
+<input id="newName" placeholder="Фамилия Имя">
 <label>Группа</label>
 <select id="newSubgroup">
 <option>1 группа</option>
 <option>2 группа</option>
 </select>
-<div class="actions"><button id="createStudent">Создать аккаунт</button></div>
+<div class="actions">
+<button id="createStudent">Добавить и создать код</button>
+</div>
 <div id="createStudentMsg" class="status hidden"></div>
+<div id="newStudentCode" class="hidden">
+<p>Личный код нового студента:</p>
+<div class="codebox" id="generatedCode"></div>
+<div class="actions">
+<button class="secondary" id="copyNewCode">Копировать код</button>
+</div>
+<p class="muted">Передайте этот код студенту. Сохраните его — повторно показать этот код нельзя.</p>
+</div>
+</div>
+
+<div class="card">
+<h3>Список студентов и личные коды</h3>
+<p class="muted">Для студентов без кода нажмите «Создать код». Для уже созданного кода можно выпустить новый.</p>
+<div id="studentList">Загрузка...</div>
 </div>
 
 <div class="card">
@@ -199,11 +230,6 @@ a{color:#145b8c}
 </select>
 <div class="actions"><button id="markAttendance">Сохранить отметку</button></div>
 </div>
-
-<div class="card">
-<h3>Список студентов</h3>
-<div id="studentList">Загрузка...</div>
-</div>
 </section>
 
 <div id="appMsg" class="status hidden"></div>
@@ -220,13 +246,13 @@ a{color:#145b8c}
 const cfg = window.SUPABASE_CONFIG || window.supabaseConfig || {};
 const url = window.SUPABASE_URL || cfg.url || cfg.supabaseUrl;
 const key = window.SUPABASE_ANON_KEY || cfg.anonKey || cfg.key || cfg.supabaseKey;
-
 const $ = id => document.getElementById(id);
 
 let db = null;
 let currentUser = null;
 let profile = null;
 let studentsCache = [];
+let lastGeneratedCode = '';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({
   '&':'&amp;',
@@ -327,7 +353,9 @@ async function loadAll() {
 
   await Promise.allSettled(tasks);
 
-  if (isAdmin()) await loadStudents();
+  if (isAdmin()) {
+    await loadStudents();
+  }
 }
 
 async function loadAnnouncements() {
@@ -345,7 +373,7 @@ async function loadAnnouncements() {
     ? data.map(x => `
       <div class="item">
         <strong>${esc(x.title || 'Объявление')}</strong>
-        <div>${esc(x.content || x.text || '')}</div>
+        <div>${esc(x.content || '')}</div>
         <div class="muted">${dateText(x.created_at)}</div>
       </div>
     `).join('')
@@ -363,11 +391,17 @@ async function loadLessons() {
     return;
   }
 
-  $('lessonList').innerHTML = data?.length
-    ? data.map(x => `
+  const visible = (data || []).filter(x =>
+    x.subgroup === 'Все группы' ||
+    x.subgroup === profile?.subgroup ||
+    isAdmin()
+  );
+
+  $('lessonList').innerHTML = visible.length
+    ? visible.map(x => `
       <div class="item">
-        <strong>${esc(x.title || x.lesson_title || 'Занятие')}</strong>
-        <div>${dateText(x.lesson_date || x.starts_at)} · ${esc(x.subgroup || 'Все группы')}</div>
+        <strong>${esc(x.title || 'Занятие')}</strong>
+        <div>${dateText(x.lesson_date)} · ${esc(x.subgroup || 'Все группы')}</div>
       </div>
     `).join('')
     : 'Расписание пока пустое.';
@@ -384,11 +418,24 @@ async function loadChat() {
     return;
   }
 
+  const userIds = [...new Set((data || []).map(x => x.user_id).filter(Boolean))];
+  let names = {};
+
+  if (userIds.length) {
+    const result = await db.from('profiles')
+      .select('id,full_name')
+      .in('id', userIds);
+
+    if (!result.error) {
+      (result.data || []).forEach(p => names[p.id] = p.full_name);
+    }
+  }
+
   $('chatList').innerHTML = data?.length
     ? data.map(x => `
       <div class="item">
-        <strong>${esc(x.full_name || x.sender_name || 'Участник')}</strong>
-        <div>${esc(x.content || x.message || x.text || '')}</div>
+        <strong>${esc(names[x.user_id] || 'Участник')}</strong>
+        <div>${esc(x.content || '')}</div>
         <div class="muted">${dateText(x.created_at)}</div>
       </div>
     `).join('')
@@ -495,9 +542,8 @@ async function loadMaterials() {
 }
 
 async function loadStudents() {
-  const { data, error } = await db.from('profiles')
-    .select('id,email,full_name,subgroup,active,role')
-    .eq('role', 'student')
+  const { data, error } = await db.from('student_roster')
+    .select('id,full_name,subgroup,active')
     .order('full_name');
 
   if (error) {
@@ -507,27 +553,33 @@ async function loadStudents() {
 
   studentsCache = data || [];
 
-  $('attendanceStudent').innerHTML = studentsCache
+  const { data: profilesData } = await db.from('profiles')
+    .select('id,full_name,subgroup,active')
+    .eq('role', 'student');
+
+  const profiles = profilesData || [];
+
+  $('attendanceStudent').innerHTML = profiles
     .filter(x => x.active !== false)
     .map(x => `
       <option value="${esc(x.id)}">
-        ${esc(x.full_name || x.email)} — ${esc(x.subgroup || '')}
+        ${esc(x.full_name || 'Студент')} — ${esc(x.subgroup || '')}
       </option>
     `).join('');
 
   $('studentList').innerHTML = studentsCache.length
     ? studentsCache.map(x => `
       <div class="item">
-        <strong>${esc(x.full_name || 'Без имени')}</strong> · ${esc(x.subgroup || '')}
-        <div class="muted">
-          ${esc(x.email || '')} · ${x.active === false ? 'Отключён' : 'Активен'}
-        </div>
+        <strong>${esc(x.full_name)}</strong>
+        <div class="muted">${esc(x.subgroup)} · ${x.active === false ? 'Отключён' : 'Активен'}</div>
         <div class="actions">
           <button class="secondary"
-            data-student-action="edit"
-            data-id="${esc(x.id)}">Изменить</button>
+            data-roster-action="code"
+            data-id="${esc(x.id)}">
+            Создать / обновить код
+          </button>
           <button class="${x.active === false ? 'secondary' : 'danger'}"
-            data-student-action="toggle"
+            data-roster-action="toggle"
             data-id="${esc(x.id)}">
             ${x.active === false ? 'Включить' : 'Отключить'}
           </button>
@@ -537,10 +589,10 @@ async function loadStudents() {
     : 'Студентов пока нет.';
 }
 
-// Вход
+// ВХОД АДМИНИСТРАТОРА
 $('loginBtn').addEventListener('click', async () => {
   if (!db) {
-    showMsg('authMsg', 'Проверьте настройки config.js и загрузку Supabase.', true);
+    showMsg('authMsg', 'Проверьте настройки config.js.', true);
     return;
   }
 
@@ -565,21 +617,64 @@ $('loginBtn').addEventListener('click', async () => {
   }
 });
 
-// Выход
+// ВХОД СТУДЕНТА
+$('studentLoginBtn').addEventListener('click', async () => {
+  if (!db) {
+    showMsg('authMsg', 'Проверьте настройки config.js.', true);
+    return;
+  }
+
+  const fullName = $('studentName').value.trim();
+  const code = $('studentCode').value.trim();
+
+  if (!fullName || !code) {
+    showMsg('authMsg', 'Введите ФИО и личный код.', true);
+    return;
+  }
+
+  setBusy('studentLoginBtn', true);
+
+  try {
+    await db.auth.signOut();
+
+    const { data: authData, error: authError } =
+      await db.auth.signInAnonymously();
+
+    if (authError) throw authError;
+
+    const { error: claimError } = await db.rpc('claim_student', {
+      p_full_name: fullName,
+      p_code: code
+    });
+
+    if (claimError) {
+      await db.auth.signOut();
+      throw claimError;
+    }
+
+    await loadProfile(authData.user);
+  } catch (e) {
+    showMsg('authMsg', e.message, true);
+  } finally {
+    setBusy('studentLoginBtn', false);
+  }
+});
+
+// ВЫХОД
 $('logoutBtn').addEventListener('click', async () => {
   if (!db) return;
   await db.auth.signOut();
   location.reload();
 });
 
-// Разделы
+// РАЗДЕЛЫ
 $('tabs').addEventListener('click', e => {
   const btn = e.target.closest('[data-tab]');
   if (!btn) return;
   showTab(btn.dataset.tab);
 });
 
-// Чат
+// ЧАТ
 $('sendChat').addEventListener('click', async () => {
   if (!currentUser) return;
 
@@ -605,7 +700,7 @@ $('sendChat').addEventListener('click', async () => {
   }
 });
 
-// Объявление
+// ОБЪЯВЛЕНИЕ
 $('publishAnnouncement').addEventListener('click', async () => {
   if (!isAdmin()) return;
 
@@ -636,15 +731,15 @@ $('publishAnnouncement').addEventListener('click', async () => {
   }
 });
 
-// Добавление занятия
+// ДОБАВЛЕНИЕ ЗАНЯТИЯ
 $('addLesson').addEventListener('click', async () => {
   if (!isAdmin()) return;
 
   const title = $('lessonTitle').value.trim();
-  const lesson_date = $('lessonDate').value;
+  const lessonDate = $('lessonDate').value;
   const subgroup = $('lessonGroup').value;
 
-  if (!title || !lesson_date) {
+  if (!title || !lessonDate) {
     showError('Укажите название и дату занятия.');
     return;
   }
@@ -654,7 +749,7 @@ $('addLesson').addEventListener('click', async () => {
   try {
     const { error } = await db.from('lessons').insert({
       title,
-      lesson_date,
+      lesson_date: new Date(lessonDate).toISOString(),
       subgroup,
       created_by: currentUser.id
     });
@@ -672,7 +767,7 @@ $('addLesson').addEventListener('click', async () => {
   }
 });
 
-// Посещаемость
+// ПОСЕЩАЕМОСТЬ
 $('markAttendance').addEventListener('click', async () => {
   if (!isAdmin()) return;
 
@@ -686,7 +781,15 @@ $('markAttendance').addEventListener('click', async () => {
     return;
   }
 
-  const student = studentsCache.find(x => x.id === student_id);
+  const student = await db.from('profiles')
+    .select('subgroup')
+    .eq('id', student_id)
+    .single();
+
+  if (student.error) {
+    showError(student.error.message);
+    return;
+  }
 
   setBusy('markAttendance', true);
 
@@ -695,7 +798,7 @@ $('markAttendance').addEventListener('click', async () => {
       student_id,
       lesson_date,
       lesson_title,
-      subgroup: student?.subgroup || '',
+      subgroup: student.data.subgroup || '',
       status,
       marked_by: currentUser.id
     });
@@ -713,40 +816,43 @@ $('markAttendance').addEventListener('click', async () => {
   }
 });
 
-// Создание аккаунта студента
+// ДОБАВИТЬ СТУДЕНТА И СОЗДАТЬ КОД
 $('createStudent').addEventListener('click', async () => {
   if (!isAdmin()) return;
 
   const full_name = $('newName').value.trim();
-  const email = $('newEmail').value.trim();
-  const password = $('newPassword').value;
   const subgroup = $('newSubgroup').value;
 
-  if (!full_name || !email || !password) {
-    showMsg('createStudentMsg', 'Заполните ФИО, почту и пароль.', true);
-    return;
-  }
-
-  if (password.length < 8) {
-    showMsg('createStudentMsg', 'Пароль должен содержать не менее 8 символов.', true);
+  if (!full_name) {
+    showMsg('createStudentMsg', 'Введите ФИО студента.', true);
     return;
   }
 
   setBusy('createStudent', true);
+  $('newStudentCode').classList.add('hidden');
 
   try {
-    const { error } = await db.functions.invoke('admin-create-student', {
-      body: { full_name, email, password, subgroup }
-    });
+    const { data, error } = await db.from('student_roster')
+      .insert({ full_name, subgroup, active: true })
+      .select('id')
+      .single();
 
     if (error) throw error;
 
+    const result = await db.rpc('generate_student_code', {
+      p_student_id: data.id
+    });
+
+    if (result.error) throw result.error;
+
+    lastGeneratedCode = result.data;
+
+    $('generatedCode').textContent = lastGeneratedCode;
+    $('newStudentCode').classList.remove('hidden');
     $('newName').value = '';
-    $('newEmail').value = '';
-    $('newPassword').value = '';
 
     await loadStudents();
-    showMsg('createStudentMsg', 'Аккаунт студента создан.');
+    showMsg('createStudentMsg', 'Студент добавлен. Личный код создан.');
   } catch (e) {
     showMsg('createStudentMsg', e.message, true);
   } finally {
@@ -754,51 +860,73 @@ $('createStudent').addEventListener('click', async () => {
   }
 });
 
-// Изменение и включение/отключение студента
+// КОПИРОВАТЬ НОВЫЙ КОД
+$('copyNewCode').addEventListener('click', async () => {
+  if (!lastGeneratedCode) return;
+
+  try {
+    await navigator.clipboard.writeText(lastGeneratedCode);
+    showMsg('createStudentMsg', 'Код скопирован.');
+  } catch (e) {
+    showMsg('createStudentMsg', 'Не удалось скопировать. Запишите код вручную.', true);
+  }
+});
+
+// КОДЫ И АКТИВНОСТЬ СТУДЕНТОВ
 $('studentList').addEventListener('click', async e => {
   if (!isAdmin()) return;
 
-  const btn = e.target.closest('[data-student-action]');
+  const btn = e.target.closest('[data-roster-action]');
   if (!btn) return;
 
-  const id = btn.dataset.id;
+  const id = Number(btn.dataset.id);
   const student = studentsCache.find(x => x.id === id);
   if (!student) return;
 
-  try {
-    if (btn.dataset.studentAction === 'edit') {
-      const name = prompt('Введите новое ФИО:', student.full_name || '');
-      if (name === null || !name.trim()) return;
+  btn.disabled = true;
 
-      const { error } = await db.from('profiles')
-        .update({ full_name: name.trim() })
-        .eq('id', id);
+  try {
+    if (btn.dataset.rosterAction === 'code') {
+      if (!confirm('Создать новый код? Старый код перестанет работать.')) return;
+
+      const { data, error } = await db.rpc('generate_student_code', {
+        p_student_id: id
+      });
 
       if (error) throw error;
+
+      lastGeneratedCode = data;
+      $('generatedCode').textContent = data;
+      $('newStudentCode').classList.remove('hidden');
+      showTab('admin');
+      showMsg('appMsg', 'Новый код создан для ' + student.full_name + '.');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    if (btn.dataset.studentAction === 'toggle') {
+    if (btn.dataset.rosterAction === 'toggle') {
       const nextActive = student.active === false;
 
       if (!confirm(nextActive
-        ? 'Включить аккаунт этого студента?'
-        : 'Отключить аккаунт этого студента?')) return;
+        ? 'Включить этого студента?'
+        : 'Отключить этого студента?')) return;
 
-      const { error } = await db.from('profiles')
+      const { error } = await db.from('student_roster')
         .update({ active: nextActive })
         .eq('id', id);
 
       if (error) throw error;
-    }
 
-    await loadStudents();
-    showMsg('appMsg', 'Данные студента обновлены.');
+      await loadStudents();
+      showMsg('appMsg', 'Статус студента обновлён.');
+    }
   } catch (e) {
     showError(e.message);
+  } finally {
+    btn.disabled = false;
   }
 });
 
-// Загрузка учебного материала
+// ЗАГРУЗКА МАТЕРИАЛА
 $('uploadMat').addEventListener('click', async () => {
   if (!isAdmin()) return;
 
@@ -851,7 +979,7 @@ $('uploadMat').addEventListener('click', async () => {
   }
 });
 
-// Открытие и удаление материалов
+// ОТКРЫТИЕ И УДАЛЕНИЕ МАТЕРИАЛОВ
 $('materialsList').addEventListener('click', async e => {
   const btn = e.target.closest('[data-material-action]');
   if (!btn) return;
@@ -890,7 +1018,7 @@ $('materialsList').addEventListener('click', async e => {
   }
 });
 
-// Создание видеокомнаты
+// СОЗДАНИЕ ВИДЕОКОМНАТЫ
 $('createRoom').addEventListener('click', () => {
   if (!isAdmin()) return;
 
@@ -902,7 +1030,7 @@ $('createRoom').addEventListener('click', () => {
     '<p class="status success">Комната создана. Передайте код группе.</p>';
 });
 
-// Подключение к видеовстрече
+// ПОДКЛЮЧЕНИЕ К ВИДЕОВСТРЕЧЕ
 $('joinRoom').addEventListener('click', () => {
   const room = $('roomCode').value.trim();
 
@@ -924,7 +1052,7 @@ $('joinRoom').addEventListener('click', () => {
   );
 });
 
-// Восстановление сессии
+// ВОССТАНОВЛЕНИЕ СЕССИИ
 async function restoreSession() {
   if (!db) return;
 
