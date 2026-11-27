@@ -1,245 +1,4 @@
 
-<!doctype html>
-<html lang="ru">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#145b8c">
-<title>Стомат Туркменистан</title>
-<link rel="manifest" href="./manifest.webmanifest">
-<link rel="icon" href="./icon.svg" type="image/svg+xml">
-
-<style>
-:root{font-family:system-ui,sans-serif;color:#172536;background:#f3f6fa}
-*{box-sizing:border-box}
-body{margin:0}
-header{background:#145b8c;color:white;padding:18px 16px}
-header h1{font-size:20px;margin:0 0 4px}
-header p{margin:0;font-size:13px}
-main{max-width:900px;margin:auto;padding:14px}
-.panel,.card{background:white;border:1px solid #e2e8f0;border-radius:14px;padding:15px;margin-bottom:13px}
-h2{font-size:18px;margin:0 0 12px}
-h3{font-size:15px;margin:0 0 8px}
-label{display:block;font-size:13px;font-weight:600;margin:10px 0 5px}
-input,textarea,select,button{font:inherit}
-input,textarea,select{width:100%;padding:11px;border:1px solid #cbd5e1;border-radius:9px;background:white}
-textarea{min-height:80px}
-button{border:0;border-radius:9px;padding:11px 14px;background:#145b8c;color:white;font-weight:600;cursor:pointer}
-button:disabled{opacity:.55;cursor:not-allowed}
-button.secondary{background:#e8f0f7;color:#145b8c}
-button.danger{background:#b42318}
-.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
-.tabs{display:flex;gap:7px;overflow:auto;padding:2px 0 12px}
-.tabs button{white-space:nowrap;padding:9px 12px}
-.tabs button.active{background:#0b3f65}
-.hidden{display:none!important}
-.muted{color:#64748b;font-size:13px}
-.item{padding:11px 0;border-bottom:1px solid #edf1f5;overflow-wrap:anywhere}
-.tag{display:inline-block;background:#e8f0f7;color:#145b8c;padding:3px 8px;border-radius:20px;font-size:12px}
-.status{padding:10px;border-radius:9px;background:#eff6ff;color:#1e40af;margin:10px 0;font-size:13px;overflow-wrap:anywhere}
-.error{background:#fef2f2;color:#991b1b}
-.success{background:#ecfdf3;color:#166534}
-.topline{display:flex;justify-content:space-between;gap:10px;align-items:center}
-a{color:#145b8c}
-.codebox{font-size:20px;font-weight:800;letter-spacing:2px;word-break:break-all;background:#eff6ff;padding:12px;border-radius:9px}
-</style>
-</head>
-
-<body>
-<header>
-<h1>Стомат Туркменистан</h1>
-<p>Стома 3 семестр · учебная группа</p>
-</header>
-
-<main>
-<section id="auth" class="panel">
-<h2>Вход в систему</h2>
-
-<div id="configWarning" class="status error hidden">
-Не найдены настройки Supabase. Проверьте config.js.
-</div>
-
-<div class="card">
-<h3>Вход для студентов</h3>
-<label>ФИО</label>
-<input id="studentName" autocomplete="name" placeholder="Введите ФИО полностью">
-<label>Личный код</label>
-<input id="studentCode" autocomplete="off" placeholder="Введите личный код">
-<div class="actions">
-<button id="studentLoginBtn">Войти как студент</button>
-</div>
-</div>
-
-<div class="card">
-<h3>Вход администратора</h3>
-<label>Электронная почта</label>
-<input id="email" type="email" placeholder="name@example.com">
-<label>Пароль</label>
-<input id="password" type="password" placeholder="Пароль">
-<div class="actions">
-<button id="loginBtn">Войти как администратор</button>
-</div>
-</div>
-
-<p class="muted">Если у вас нет личного кода, обратитесь к администратору.</p>
-<div id="authMsg" class="status hidden"></div>
-</section>
-
-<section id="app" class="hidden">
-<div class="panel topline">
-<div>
-<strong id="userName">Пользователь</strong>
-<div class="muted" id="userMeta"></div>
-</div>
-<button class="secondary" id="logoutBtn">Выйти</button>
-</div>
-
-<nav class="tabs" id="tabs">
-<button class="active" data-tab="news">Объявления</button>
-<button data-tab="schedule">Расписание</button>
-<button data-tab="chat">Чат</button>
-<button data-tab="attendance">Посещаемость</button>
-<button data-tab="report">Отчёт</button>
-<button data-tab="materials">Материалы</button>
-<button data-tab="video">Видеовстреча</button>
-<button data-tab="admin" id="adminTab" class="hidden">Админ</button>
-</nav>
-
-<section id="news" class="panel">
-<h2>Объявления</h2>
-<div id="newsList">Загрузка...</div>
-</section>
-
-<section id="schedule" class="panel hidden">
-<h2>Расписание</h2>
-<div id="lessonList">Загрузка...</div>
-</section>
-
-<section id="chat" class="panel hidden">
-<h2>Групповой чат</h2>
-<div id="chatList"></div>
-<label>Сообщение</label>
-<textarea id="chatText" placeholder="Напишите сообщение..."></textarea>
-<div class="actions"><button id="sendChat">Отправить</button></div>
-</section>
-
-<section id="attendance" class="panel hidden">
-<h2>Посещаемость</h2>
-<div id="attendanceList"></div>
-</section>
-
-<section id="report" class="panel hidden">
-<h2>Отчёт за неделю</h2>
-<div id="reportContent">Загрузка...</div>
-</section>
-
-<section id="materials" class="panel hidden">
-<h2>Учебные материалы</h2>
-<div id="uploadBox" class="card hidden">
-<h3>Добавить материал</h3>
-<label>Название</label>
-<input id="matTitle">
-<label>Описание</label>
-<textarea id="matDesc"></textarea>
-<label>Файл (до 20 МБ)</label>
-<input id="matFile" type="file">
-<div class="actions"><button id="uploadMat">Загрузить</button></div>
-</div>
-<div id="materialsList">Загрузка...</div>
-</section>
-
-<section id="video" class="panel hidden">
-<h2>Видеовстреча</h2>
-<p class="muted">Видеовстречи открываются через Jitsi.</p>
-<div id="videoAdmin" class="card hidden">
-<h3>Создать комнату</h3>
-<div class="actions"><button id="createRoom">Создать комнату</button></div>
-<div id="roomCreated"></div>
-</div>
-<label>Код комнаты</label>
-<input id="roomCode" placeholder="Введите код комнаты">
-<div class="actions"><button id="joinRoom">Присоединиться</button></div>
-</section>
-
-<section id="admin" class="panel hidden">
-<h2>Панель администратора</h2>
-
-<div class="card">
-<h3>Добавить студента</h3>
-<label>ФИО</label>
-<input id="newName" placeholder="Фамилия Имя">
-<label>Группа</label>
-<select id="newSubgroup">
-<option>1 группа</option>
-<option>2 группа</option>
-</select>
-<div class="actions">
-<button id="createStudent">Добавить и создать код</button>
-</div>
-<div id="createStudentMsg" class="status hidden"></div>
-<div id="newStudentCode" class="hidden">
-<p>Личный код нового студента:</p>
-<div class="codebox" id="generatedCode"></div>
-<div class="actions">
-<button class="secondary" id="copyNewCode">Копировать код</button>
-</div>
-<p class="muted">Передайте этот код студенту. Сохраните его — повторно показать этот код нельзя.</p>
-</div>
-</div>
-
-<div class="card">
-<h3>Список студентов и личные коды</h3>
-<p class="muted">Для студентов без кода нажмите «Создать код». Для уже созданного кода можно выпустить новый.</p>
-<div id="studentList">Загрузка...</div>
-</div>
-
-<div class="card">
-<h3>Новое объявление</h3>
-<textarea id="newAnnouncement" placeholder="Текст объявления"></textarea>
-<div class="actions"><button id="publishAnnouncement">Опубликовать</button></div>
-</div>
-
-<div class="card">
-<h3>Добавить занятие</h3>
-<label>Название</label>
-<input id="lessonTitle">
-<label>Дата и время</label>
-<input id="lessonDate" type="datetime-local">
-<label>Группа</label>
-<select id="lessonGroup">
-<option>Все группы</option>
-<option>1 группа</option>
-<option>2 группа</option>
-</select>
-<div class="actions"><button id="addLesson">Добавить в расписание</button></div>
-</div>
-
-<div class="card">
-<h3>Отметить посещаемость</h3>
-<label>Студент</label>
-<select id="attendanceStudent"></select>
-<label>Дата</label>
-<input id="attendanceDate" type="date">
-<label>Занятие</label>
-<input id="attendanceTitle">
-<label>Статус</label>
-<select id="attendanceStatus">
-<option value="present">Присутствовал</option>
-<option value="absent">Отсутствовал</option>
-<option value="late">Опоздал</option>
-</select>
-<div class="actions"><button id="markAttendance">Сохранить отметку</button></div>
-</div>
-</section>
-
-<div id="appMsg" class="status hidden"></div>
-</section>
-</main>
-
-<script src="./config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
-<script>
 (() => {
 'use strict';
 
@@ -255,11 +14,7 @@ let studentsCache = [];
 let lastGeneratedCode = '';
 
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({
-  '&':'&amp;',
-  '<':'&lt;',
-  '>':'&gt;',
-  '"':'&quot;',
-  "'":'&#39;'
+  '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
 }[c]));
 
 const dateText = value => {
@@ -283,8 +38,7 @@ function showError(message) {
 }
 
 function setBusy(id, busy) {
-  const el = $(id);
-  if (el) el.disabled = busy;
+  if ($(id)) $(id).disabled = busy;
 }
 
 if (!url || !key || !window.supabase) {
@@ -298,19 +52,16 @@ function showTab(name) {
   if (!allowed.includes(name)) return;
   if (name === 'admin' && !isAdmin()) return;
 
-  document.querySelectorAll('#tabs [data-tab]').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.tab === name);
-  });
+  document.querySelectorAll('#tabs [data-tab]').forEach(btn =>
+    btn.classList.toggle('active', btn.dataset.tab === name)
+  );
 
   allowed.forEach(id => {
-    const panel = $(id);
-    if (panel) panel.classList.toggle('hidden', id !== name);
+    if ($(id)) $(id).classList.toggle('hidden', id !== name);
   });
 }
 
 async function loadProfile(user) {
-  if (!db) throw new Error('Нет подключения к Supabase.');
-
   const { data, error } = await db.from('profiles')
     .select('id,email,full_name,role,subgroup,active')
     .eq('id', user.id)
@@ -342,49 +93,39 @@ async function loadProfile(user) {
 }
 
 async function loadAll() {
-  const tasks = [
+  await Promise.allSettled([
     loadAnnouncements(),
     loadLessons(),
     loadChat(),
     loadAttendance(),
     loadReport(),
     loadMaterials()
-  ];
+  ]);
 
-  await Promise.allSettled(tasks);
-
-  if (isAdmin()) {
-    await loadStudents();
-  }
+  if (isAdmin()) await loadStudents();
 }
 
 async function loadAnnouncements() {
   const { data, error } = await db.from('announcements')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(50);
+    .select('*').order('created_at', { ascending: false }).limit(50);
 
   if (error) {
     $('newsList').textContent = error.message;
     return;
   }
 
-  $('newsList').innerHTML = data?.length
-    ? data.map(x => `
-      <div class="item">
-        <strong>${esc(x.title || 'Объявление')}</strong>
-        <div>${esc(x.content || '')}</div>
-        <div class="muted">${dateText(x.created_at)}</div>
-      </div>
-    `).join('')
-    : 'Объявлений пока нет.';
+  $('newsList').innerHTML = data?.length ? data.map(x => `
+    <div class="item">
+      <strong>${esc(x.title || 'Объявление')}</strong>
+      <div>${esc(x.content || '')}</div>
+      <div class="muted">${dateText(x.created_at)}</div>
+    </div>
+  `).join('') : 'Объявлений пока нет.';
 }
 
 async function loadLessons() {
   const { data, error } = await db.from('lessons')
-    .select('*')
-    .order('lesson_date', { ascending: true })
-    .limit(100);
+    .select('*').order('lesson_date', { ascending: true }).limit(100);
 
   if (error) {
     $('lessonList').textContent = error.message;
@@ -397,60 +138,42 @@ async function loadLessons() {
     isAdmin()
   );
 
-  $('lessonList').innerHTML = visible.length
-    ? visible.map(x => `
-      <div class="item">
-        <strong>${esc(x.title || 'Занятие')}</strong>
-        <div>${dateText(x.lesson_date)} · ${esc(x.subgroup || 'Все группы')}</div>
+  $('lessonList').innerHTML = visible.length ? visible.map(x => `
+    <div class="item">
+      <strong>${esc(x.title || 'Занятие')}</strong>
+      <div>${esc(x.lesson_date || '')}
+        ${x.lesson_time ? ' · ' + esc(String(x.lesson_time).slice(0,5)) : ''}
+        · ${esc(x.subgroup || 'Все группы')}
       </div>
-    `).join('')
-    : 'Расписание пока пустое.';
+      ${x.room ? `<div>${esc(x.room)}</div>` : ''}
+    </div>
+  `).join('') : 'Расписание пока пустое.';
 }
 
 async function loadChat() {
   const { data, error } = await db.from('messages')
-    .select('*')
-    .order('created_at', { ascending: true })
-    .limit(100);
+    .select('id,user_id,full_name,content,created_at')
+    .order('created_at', { ascending: true }).limit(100);
 
   if (error) {
     $('chatList').textContent = error.message;
     return;
   }
 
-  const userIds = [...new Set((data || []).map(x => x.user_id).filter(Boolean))];
-  let names = {};
-
-  if (userIds.length) {
-    const result = await db.from('profiles')
-      .select('id,full_name')
-      .in('id', userIds);
-
-    if (!result.error) {
-      (result.data || []).forEach(p => names[p.id] = p.full_name);
-    }
-  }
-
-  $('chatList').innerHTML = data?.length
-    ? data.map(x => `
-      <div class="item">
-        <strong>${esc(names[x.user_id] || 'Участник')}</strong>
-        <div>${esc(x.content || '')}</div>
-        <div class="muted">${dateText(x.created_at)}</div>
-      </div>
-    `).join('')
-    : 'Сообщений пока нет.';
+  $('chatList').innerHTML = data?.length ? data.map(x => `
+    <div class="item">
+      <strong>${esc(x.full_name || 'Участник')}</strong>
+      <div>${esc(x.content || '')}</div>
+      <div class="muted">${dateText(x.created_at)}</div>
+    </div>
+  `).join('') : 'Сообщений пока нет.';
 }
 
 async function loadAttendance() {
-  let query = db.from('attendance')
-    .select('*')
-    .order('lesson_date', { ascending: false })
-    .limit(100);
+  let query = db.from('attendance').select('*')
+    .order('lesson_date', { ascending: false }).limit(100);
 
-  if (!isAdmin()) {
-    query = query.eq('student_id', currentUser.id);
-  }
+  if (!isAdmin()) query = query.eq('student_id', currentUser.id);
 
   const { data, error } = await query;
 
@@ -459,30 +182,31 @@ async function loadAttendance() {
     return;
   }
 
-  $('attendanceList').innerHTML = data?.length
-    ? data.map(x => `
-      <div class="item">
-        ${esc(x.lesson_title || 'Занятие')} · ${esc(x.lesson_date)}
-        <span class="tag">${esc(x.status)}</span>
-      </div>
-    `).join('')
-    : 'Записей пока нет.';
+  const statuses = {
+    present: 'Присутствовал',
+    absent: 'Отсутствовал',
+    late: 'Опоздал'
+  };
+
+  $('attendanceList').innerHTML = data?.length ? data.map(x => `
+    <div class="item">
+      ${esc(x.lesson_title || 'Занятие')} · ${esc(x.lesson_date)}
+      <span class="tag">${statuses[x.status] || esc(x.status)}</span>
+    </div>
+  `).join('') : 'Записей пока нет.';
 }
 
 async function loadReport() {
   const since = new Date();
   since.setDate(since.getDate() - 7);
 
-  let query = db.from('attendance')
-    .select('status,student_id,lesson_date');
+  let query = db.from('attendance').select('status,student_id,lesson_date');
 
-  if (!isAdmin()) {
-    query = query.eq('student_id', currentUser.id);
-  }
+  if (!isAdmin()) query = query.eq('student_id', currentUser.id);
 
-  query = query.gte('lesson_date', since.toISOString().slice(0, 10));
-
-  const { data, error } = await query;
+  const { data, error } = await query.gte(
+    'lesson_date', since.toISOString().slice(0, 10)
+  );
 
   if (error) {
     $('reportContent').textContent = error.message;
@@ -490,23 +214,17 @@ async function loadReport() {
   }
 
   const rows = data || [];
-  const present = rows.filter(x => x.status === 'present').length;
-  const absent = rows.filter(x => x.status === 'absent').length;
-  const late = rows.filter(x => x.status === 'late').length;
-
   $('reportContent').innerHTML = `
     За последние 7 дней: <strong>${rows.length}</strong> отметок<br>
-    Присутствовал: <strong>${present}</strong><br>
-    Отсутствовал: <strong>${absent}</strong><br>
-    Опоздал: <strong>${late}</strong>
+    Присутствовал: <strong>${rows.filter(x => x.status === 'present').length}</strong><br>
+    Отсутствовал: <strong>${rows.filter(x => x.status === 'absent').length}</strong><br>
+    Опоздал: <strong>${rows.filter(x => x.status === 'late').length}</strong>
   `;
 }
 
 async function loadMaterials() {
   const { data, error } = await db.from('materials')
-    .select('*')
-    .order('created_at', { ascending: false })
-    .limit(100);
+    .select('*').order('created_at', { ascending: false }).limit(100);
 
   if (error) {
     $('materialsList').textContent = error.message;
@@ -524,17 +242,11 @@ async function loadMaterials() {
       <div>${esc(x.description || '')}</div>
       <div class="muted">${dateText(x.created_at)}</div>
       <div class="actions">
-        <button class="secondary"
-          data-material-action="open"
-          data-path="${esc(x.file_path || '')}">
-          Открыть файл
-        </button>
+        <button class="secondary" data-material-action="open"
+          data-path="${esc(x.file_path || '')}">Открыть файл</button>
         ${isAdmin() ? `
-          <button class="danger"
-            data-material-action="delete"
-            data-path="${esc(x.file_path || '')}">
-            Удалить
-          </button>
+          <button class="danger" data-material-action="delete"
+            data-path="${esc(x.file_path || '')}">Удалить</button>
         ` : ''}
       </div>
     </div>
@@ -543,8 +255,7 @@ async function loadMaterials() {
 
 async function loadStudents() {
   const { data, error } = await db.from('student_roster')
-    .select('id,full_name,subgroup,active')
-    .order('full_name');
+    .select('id,full_name,subgroup,active').order('full_name');
 
   if (error) {
     $('studentList').textContent = error.message;
@@ -553,59 +264,45 @@ async function loadStudents() {
 
   studentsCache = data || [];
 
-  const { data: profilesData } = await db.from('profiles')
-    .select('id,full_name,subgroup,active')
-    .eq('role', 'student');
+  const { data: profilesData, error: profilesError } = await db.from('profiles')
+    .select('id,full_name,subgroup,active').eq('role', 'student');
 
-  const profiles = profilesData || [];
-
-  $('attendanceStudent').innerHTML = profiles
-    .filter(x => x.active !== false)
-    .map(x => `
-      <option value="${esc(x.id)}">
-        ${esc(x.full_name || 'Студент')} — ${esc(x.subgroup || '')}
-      </option>
-    `).join('');
-
-  $('studentList').innerHTML = studentsCache.length
-    ? studentsCache.map(x => `
-      <div class="item">
-        <strong>${esc(x.full_name)}</strong>
-        <div class="muted">${esc(x.subgroup)} · ${x.active === false ? 'Отключён' : 'Активен'}</div>
-        <div class="actions">
-          <button class="secondary"
-            data-roster-action="code"
-            data-id="${esc(x.id)}">
-            Создать / обновить код
-          </button>
-          <button class="${x.active === false ? 'secondary' : 'danger'}"
-            data-roster-action="toggle"
-            data-id="${esc(x.id)}">
-            ${x.active === false ? 'Включить' : 'Отключить'}
-          </button>
-        </div>
-      </div>
-    `).join('')
-    : 'Студентов пока нет.';
-}
-
-// ВХОД АДМИНИСТРАТОРА
-$('loginBtn').addEventListener('click', async () => {
-  if (!db) {
-    showMsg('authMsg', 'Проверьте настройки config.js.', true);
+  if (profilesError) {
+    $('studentList').textContent = profilesError.message;
     return;
   }
+
+  $('attendanceStudent').innerHTML = (profilesData || [])
+    .filter(x => x.active !== false)
+    .map(x => `<option value="${esc(x.id)}">
+      ${esc(x.full_name || 'Студент')} — ${esc(x.subgroup || '')}
+    </option>`).join('');
+
+  $('studentList').innerHTML = studentsCache.length ? studentsCache.map(x => `
+    <div class="item">
+      <strong>${esc(x.full_name)}</strong>
+      <div class="muted">${esc(x.subgroup)} · ${x.active === false ? 'Отключён' : 'Активен'}</div>
+      <div class="actions">
+        <button class="secondary" data-roster-action="code"
+          data-id="${esc(x.id)}">Создать / обновить код</button>
+        <button class="${x.active === false ? 'secondary' : 'danger'}"
+          data-roster-action="toggle" data-id="${esc(x.id)}">
+          ${x.active === false ? 'Включить' : 'Отключить'}
+        </button>
+      </div>
+    </div>
+  `).join('') : 'Студентов пока нет.';
+}
+
+// ADMIN LOGIN
+$('loginBtn').addEventListener('click', async () => {
+  if (!db) return showMsg('authMsg', 'Проверьте config.js.', true);
 
   const email = $('email').value.trim();
   const password = $('password').value;
-
-  if (!email || !password) {
-    showMsg('authMsg', 'Введите почту и пароль.', true);
-    return;
-  }
+  if (!email || !password) return showMsg('authMsg', 'Введите почту и пароль.', true);
 
   setBusy('loginBtn', true);
-
   try {
     const { data, error } = await db.auth.signInWithPassword({ email, password });
     if (error) throw error;
@@ -617,30 +314,23 @@ $('loginBtn').addEventListener('click', async () => {
   }
 });
 
-// ВХОД СТУДЕНТА
+// STUDENT LOGIN
 $('studentLoginBtn').addEventListener('click', async () => {
-  if (!db) {
-    showMsg('authMsg', 'Проверьте настройки config.js.', true);
-    return;
-  }
+  if (!db) return showMsg('authMsg', 'Проверьте config.js.', true);
 
   const fullName = $('studentName').value.trim();
   const code = $('studentCode').value.trim();
 
   if (!fullName || !code) {
-    showMsg('authMsg', 'Введите ФИО и личный код.', true);
-    return;
+    return showMsg('authMsg', 'Введите ФИО и личный код.', true);
   }
 
   setBusy('studentLoginBtn', true);
-
   try {
     await db.auth.signOut();
 
-    const { data: authData, error: authError } =
-      await db.auth.signInAnonymously();
-
-    if (authError) throw authError;
+    const { data, error } = await db.auth.signInAnonymously();
+    if (error) throw error;
 
     const { error: claimError } = await db.rpc('claim_student', {
       p_full_name: fullName,
@@ -652,7 +342,7 @@ $('studentLoginBtn').addEventListener('click', async () => {
       throw claimError;
     }
 
-    await loadProfile(authData.user);
+    await loadProfile(data.user);
   } catch (e) {
     showMsg('authMsg', e.message, true);
   } finally {
@@ -660,35 +350,28 @@ $('studentLoginBtn').addEventListener('click', async () => {
   }
 });
 
-// ВЫХОД
 $('logoutBtn').addEventListener('click', async () => {
-  if (!db) return;
-  await db.auth.signOut();
+  if (db) await db.auth.signOut();
   location.reload();
 });
 
-// РАЗДЕЛЫ
 $('tabs').addEventListener('click', e => {
   const btn = e.target.closest('[data-tab]');
-  if (!btn) return;
-  showTab(btn.dataset.tab);
+  if (btn) showTab(btn.dataset.tab);
 });
 
-// ЧАТ
+// CHAT
 $('sendChat').addEventListener('click', async () => {
-  if (!currentUser) return;
-
   const content = $('chatText').value.trim();
-  if (!content) return;
+  if (!content || !currentUser) return;
 
   setBusy('sendChat', true);
-
   try {
     const { error } = await db.from('messages').insert({
       user_id: currentUser.id,
+      full_name: profile.full_name || 'Участник',
       content
     });
-
     if (error) throw error;
 
     $('chatText').value = '';
@@ -700,25 +383,20 @@ $('sendChat').addEventListener('click', async () => {
   }
 });
 
-// ОБЪЯВЛЕНИЕ
+// ANNOUNCEMENT
 $('publishAnnouncement').addEventListener('click', async () => {
   if (!isAdmin()) return;
 
   const content = $('newAnnouncement').value.trim();
-  if (!content) {
-    showError('Введите текст объявления.');
-    return;
-  }
+  if (!content) return showError('Введите текст объявления.');
 
   setBusy('publishAnnouncement', true);
-
   try {
     const { error } = await db.from('announcements').insert({
       title: 'Объявление',
       content,
       created_by: currentUser.id
     });
-
     if (error) throw error;
 
     $('newAnnouncement').value = '';
@@ -731,29 +409,28 @@ $('publishAnnouncement').addEventListener('click', async () => {
   }
 });
 
-// ДОБАВЛЕНИЕ ЗАНЯТИЯ
+// ADD LESSON
 $('addLesson').addEventListener('click', async () => {
   if (!isAdmin()) return;
 
   const title = $('lessonTitle').value.trim();
-  const lessonDate = $('lessonDate').value;
+  const value = $('lessonDate').value;
   const subgroup = $('lessonGroup').value;
 
-  if (!title || !lessonDate) {
-    showError('Укажите название и дату занятия.');
-    return;
-  }
+  if (!title || !value) return showError('Укажите название и дату занятия.');
+
+  const [datePart, timePart] = value.split('T');
+  if (!datePart || !timePart) return showError('Неверная дата или время.');
 
   setBusy('addLesson', true);
-
   try {
     const { error } = await db.from('lessons').insert({
       title,
-      lesson_date: new Date(lessonDate).toISOString(),
+      lesson_date: datePart,
+      lesson_time: timePart,
       subgroup,
       created_by: currentUser.id
     });
-
     if (error) throw error;
 
     $('lessonTitle').value = '';
@@ -767,7 +444,7 @@ $('addLesson').addEventListener('click', async () => {
   }
 });
 
-// ПОСЕЩАЕМОСТЬ
+// ATTENDANCE
 $('markAttendance').addEventListener('click', async () => {
   if (!isAdmin()) return;
 
@@ -777,32 +454,24 @@ $('markAttendance').addEventListener('click', async () => {
   const status = $('attendanceStatus').value;
 
   if (!student_id || !lesson_date || !lesson_title) {
-    showError('Заполните все поля посещаемости.');
-    return;
-  }
-
-  const student = await db.from('profiles')
-    .select('subgroup')
-    .eq('id', student_id)
-    .single();
-
-  if (student.error) {
-    showError(student.error.message);
-    return;
+    return showError('Заполните все поля посещаемости.');
   }
 
   setBusy('markAttendance', true);
-
   try {
+    const { data: student, error: studentError } = await db.from('profiles')
+      .select('subgroup').eq('id', student_id).single();
+
+    if (studentError) throw studentError;
+
     const { error } = await db.from('attendance').insert({
       student_id,
       lesson_date,
       lesson_title,
-      subgroup: student.data.subgroup || '',
+      subgroup: student.subgroup || '',
       status,
       marked_by: currentUser.id
     });
-
     if (error) throw error;
 
     $('attendanceTitle').value = '';
@@ -816,17 +485,14 @@ $('markAttendance').addEventListener('click', async () => {
   }
 });
 
-// ДОБАВИТЬ СТУДЕНТА И СОЗДАТЬ КОД
+// CREATE STUDENT
 $('createStudent').addEventListener('click', async () => {
   if (!isAdmin()) return;
 
   const full_name = $('newName').value.trim();
   const subgroup = $('newSubgroup').value;
 
-  if (!full_name) {
-    showMsg('createStudentMsg', 'Введите ФИО студента.', true);
-    return;
-  }
+  if (!full_name) return showMsg('createStudentMsg', 'Введите ФИО студента.', true);
 
   setBusy('createStudent', true);
   $('newStudentCode').classList.add('hidden');
@@ -834,19 +500,14 @@ $('createStudent').addEventListener('click', async () => {
   try {
     const { data, error } = await db.from('student_roster')
       .insert({ full_name, subgroup, active: true })
-      .select('id')
-      .single();
+      .select('id').single();
 
     if (error) throw error;
 
-    const result = await db.rpc('generate_student_code', {
-      p_student_id: data.id
-    });
-
+    const result = await db.rpc('generate_student_code', { p_student_id: data.id });
     if (result.error) throw result.error;
 
     lastGeneratedCode = result.data;
-
     $('generatedCode').textContent = lastGeneratedCode;
     $('newStudentCode').classList.remove('hidden');
     $('newName').value = '';
@@ -860,19 +521,17 @@ $('createStudent').addEventListener('click', async () => {
   }
 });
 
-// КОПИРОВАТЬ НОВЫЙ КОД
 $('copyNewCode').addEventListener('click', async () => {
   if (!lastGeneratedCode) return;
-
   try {
     await navigator.clipboard.writeText(lastGeneratedCode);
     showMsg('createStudentMsg', 'Код скопирован.');
-  } catch (e) {
+  } catch {
     showMsg('createStudentMsg', 'Не удалось скопировать. Запишите код вручную.', true);
   }
 });
 
-// КОДЫ И АКТИВНОСТЬ СТУДЕНТОВ
+// ROSTER ACTIONS
 $('studentList').addEventListener('click', async e => {
   if (!isAdmin()) return;
 
@@ -884,7 +543,6 @@ $('studentList').addEventListener('click', async e => {
   if (!student) return;
 
   btn.disabled = true;
-
   try {
     if (btn.dataset.rosterAction === 'code') {
       if (!confirm('Создать новый код? Старый код перестанет работать.')) return;
@@ -892,7 +550,6 @@ $('studentList').addEventListener('click', async e => {
       const { data, error } = await db.rpc('generate_student_code', {
         p_student_id: id
       });
-
       if (error) throw error;
 
       lastGeneratedCode = data;
@@ -905,15 +562,10 @@ $('studentList').addEventListener('click', async e => {
 
     if (btn.dataset.rosterAction === 'toggle') {
       const nextActive = student.active === false;
-
-      if (!confirm(nextActive
-        ? 'Включить этого студента?'
-        : 'Отключить этого студента?')) return;
+      if (!confirm(nextActive ? 'Включить этого студента?' : 'Отключить этого студента?')) return;
 
       const { error } = await db.from('student_roster')
-        .update({ active: nextActive })
-        .eq('id', id);
-
+        .update({ active: nextActive }).eq('id', id);
       if (error) throw error;
 
       await loadStudents();
@@ -926,7 +578,7 @@ $('studentList').addEventListener('click', async e => {
   }
 });
 
-// ЗАГРУЗКА МАТЕРИАЛА
+// UPLOAD MATERIAL
 $('uploadMat').addEventListener('click', async () => {
   if (!isAdmin()) return;
 
@@ -934,21 +586,13 @@ $('uploadMat').addEventListener('click', async () => {
   const title = $('matTitle').value.trim();
   const description = $('matDesc').value.trim();
 
-  if (!file || !title) {
-    showError('Выберите файл и укажите название.');
-    return;
-  }
-
-  if (file.size > 20 * 1024 * 1024) {
-    showError('Размер файла не должен превышать 20 МБ.');
-    return;
-  }
+  if (!file || !title) return showError('Выберите файл и укажите название.');
+  if (file.size > 20 * 1024 * 1024) return showError('Размер файла не должен превышать 20 МБ.');
 
   const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
   const path = `${Date.now()}_${safeName}`;
 
   setBusy('uploadMat', true);
-
   try {
     const upload = await db.storage.from('materials').upload(path, file);
     if (upload.error) throw upload.error;
@@ -979,7 +623,7 @@ $('uploadMat').addEventListener('click', async () => {
   }
 });
 
-// ОТКРЫТИЕ И УДАЛЕНИЕ МАТЕРИАЛОВ
+// OPEN / DELETE MATERIAL
 $('materialsList').addEventListener('click', async e => {
   const btn = e.target.closest('[data-material-action]');
   if (!btn) return;
@@ -989,10 +633,8 @@ $('materialsList').addEventListener('click', async e => {
 
   try {
     if (btn.dataset.materialAction === 'open') {
-      const { data, error } = await db.storage
-        .from('materials')
+      const { data, error } = await db.storage.from('materials')
         .createSignedUrl(path, 60);
-
       if (error) throw error;
 
       window.open(data.signedUrl, '_blank', 'noopener');
@@ -1004,10 +646,7 @@ $('materialsList').addEventListener('click', async e => {
       const fileResult = await db.storage.from('materials').remove([path]);
       if (fileResult.error) throw fileResult.error;
 
-      const { error } = await db.from('materials')
-        .delete()
-        .eq('file_path', path);
-
+      const { error } = await db.from('materials').delete().eq('file_path', path);
       if (error) throw error;
 
       await loadMaterials();
@@ -1018,51 +657,35 @@ $('materialsList').addEventListener('click', async e => {
   }
 });
 
-// СОЗДАНИЕ ВИДЕОКОМНАТЫ
+// VIDEO ROOM
 $('createRoom').addEventListener('click', () => {
   if (!isAdmin()) return;
 
-  const room = 'stomat-turkmenistan-' +
-    Math.random().toString(36).slice(2, 10);
-
+  const room = 'stomat-turkmenistan-' + Math.random().toString(36).slice(2, 10);
   $('roomCode').value = room;
   $('roomCreated').innerHTML =
     '<p class="status success">Комната создана. Передайте код группе.</p>';
 });
 
-// ПОДКЛЮЧЕНИЕ К ВИДЕОВСТРЕЧЕ
 $('joinRoom').addEventListener('click', () => {
   const room = $('roomCode').value.trim();
-
-  if (!room) {
-    showError('Введите код комнаты.');
-    return;
-  }
+  if (!room) return showError('Введите код комнаты.');
 
   const safeRoom = room.replace(/[^a-zA-Z0-9_-]/g, '');
-  if (!safeRoom) {
-    showError('Неверный код комнаты.');
-    return;
-  }
+  if (!safeRoom) return showError('Неверный код комнаты.');
 
-  window.open(
-    'https://meet.jit.si/' + encodeURIComponent(safeRoom),
-    '_blank',
-    'noopener'
-  );
+  window.open('https://meet.jit.si/' + encodeURIComponent(safeRoom),
+    '_blank', 'noopener');
 });
 
-// ВОССТАНОВЛЕНИЕ СЕССИИ
+// RESTORE SESSION
 async function restoreSession() {
   if (!db) return;
 
   try {
     const { data, error } = await db.auth.getSession();
     if (error) throw error;
-
-    if (data.session?.user) {
-      await loadProfile(data.session.user);
-    }
+    if (data.session?.user) await loadProfile(data.session.user);
   } catch (e) {
     showMsg('authMsg', e.message, true);
   }
@@ -1071,6 +694,3 @@ async function restoreSession() {
 restoreSession();
 
 })();
-</script>
-</body>
-</html>
